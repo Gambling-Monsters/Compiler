@@ -1,12 +1,17 @@
 %{
+#include "syntax.tab.h"
 #define debug_mode
 int lexError=0;
 typedef enum {
-    LEX_INT=0,
-    LEX_FLOAT=1,
-    LEX_ID=2,
-    LEX_TYPE=3,
-    OTHERS
+    KEYWORDS,
+    KEYWORD_RELOP,
+    KEYWORD_BRACKET,
+    KEYWORD_PUNCTUATION,
+    KEYWORD_OPERATOR,
+    LEX_ID,
+    LEX_INT,
+    LEX_FLOAT,
+    LEX_OTHERS
 }NODE_TYPE;
 struct AST_Node{
     struct AST_Node* child;
@@ -17,7 +22,8 @@ struct AST_Node{
         float is_float;
         char is_string[32];
     };
-    int column;
+    int height;
+    int lineno;
     NODE_TYPE type;
 };
 void debug_info(char *str)
@@ -25,6 +31,16 @@ void debug_info(char *str)
     #ifdef  debug_mode
         printf("debug:Line %d :input  %s : %s\n",yylineno,str,yytext);
     #endif
+}
+AST_Node* node_init(char * Name, NODE_TYPE Type, int line){
+    AST_Node*  my_node=(struct AST_Node*)malloc(sizeof(struct AST_Node));
+
+    my_node->height = 0;
+    strcpy(my_node->name,Name);
+    my_node->type=Type;
+    my_node->lineno = line;
+
+    return my_node;
 }
 %}
 %option yylineno
@@ -53,39 +69,223 @@ WS [ \t\r\n]+
 %%
 {BIN}   {
             debug_info("BIN");
+            yylval.node=node_init("INT",LEX_INT, yylineno);
+            sscanf(yytext,"%[01]",&yylval.node->is_int);
+            return INT;
         }
 {BAD_BIN}  {
                 printf("Error type A at Line %d: Illegal binary number\'%s\'.\n",yylineno, yytext);
-                lexError+=1;
+                yylval.node=node_init("INT",LEX_INT, yylineno);
+                yylval.node->is_int = 0;
+                lexError + =1;
+                return INT;
             }
 {OCT}   {
             debug_info("OCT");
+            yylval.node=node_init("INT", LEX_INT, yylineno);
+            sscanf(yytext,"%o",&yylval.node->is_int);
+            return INT;
         }
 {BAD_OCT}  {
                 printf("Error type A at Line %d: Illegal octal number\'%s\'.\n",yylineno, yytext);
-                lexError+=1;
+                yylval.node=node_init("INT",LEX_INT, yylineno);
+                yylval.node->is_int = 0;
+                lexError + =1;
+                return INT;
             }
 {DEC}   {   
             debug_info("DEC");
+            yylval.node=node_init("INT", LEX_INT, yylineno);
+            sscanf(yytext,"%d",&yylval.node->is_int);
+            return INT;
         }
 {BAD_DEC}  {
                 printf("Error type A at Line %d: Illegal decimal number\'%s\'.\n",yylineno, yytext);
-                lexError+=1;
+                yylval.node=node_init("INT",LEX_INT, yylineno);
+                yylval.node->is_int = 0;
+                lexError + =1;
+                return INT;
             }
 {HEX}   {
             debug_info("HEX");
+            yylval.node=node_init("INT", LEX_INT, yylineno);
+            sscanf(yytext, "%x", &yylval.node->is_int);
+            return INT;
         }
 {BAD_HEX}  {
                 printf("Error type A at Line %d: Illegal hexadecimal number\'%s\'.\n",yylineno, yytext);
-                lexError+=1;
+                yylval.node=node_init("INT",LEX_INT, yylineno);
+                yylval.node->is_int = 0;
+                lexError + =1;
+                return INT;
             }
 {FLOAT} {
             debug_info("FLOAT");
+            yylval.node=node_init("FLOAT",LEX_FLOAT, yylineno);
+            sscanf(yytext,"%f",&yylval.node->is_float);
+            return FLOAT;
         }
 {BAD_FLOAT}    {
                     printf("Error type A at Line %d: Illegal floating point number\'%s\'.\n",yylineno, yytext);
+                    add_lexnode("FLOAT",LEX_FLOAT);
+                    yylval.node->is_float=0;
                     lexError+=1;
+                    return FLOAT;
                 }
+
+
+";" {
+        debug_info("SEMI");
+        yylval.node=node_init("SEMI", KEYWORD_PUNCTUATION, yylineno);
+        sscanf(yytext,"%s",&yylval.node->is_string);
+        return SEMI;
+    }
+"," {
+        debug_info("COMMA");
+        yylval.node=node_init("COMMA", KEYWORD_PUNCTUATION, yylineno);
+        sscanf(yytext,"%s",&yylval.node->is_string);
+        return COMMA;
+    }
+"=" {
+        debug_info("ASSIGNOP");
+        yylval.node=node_init("ASSIGNOP", KEYWORD_OPERATOR, yylineno);
+        sscanf(yytext, "%s", &yylval.node->is_string);
+        return ASSIGNOP;
+    }
+{RELOP}     {
+                debug_info("RELOP");
+                yylval.node=node_init("RELOP", KEYWORD_RELOP, yylineno);
+                sscanf(yytext, "%s", &yylval.node->is_string);
+                return RELOP;
+            }
+"+" {
+        debug_info("PLUS");
+        yylval.node=node_init("PLUS", KEYWORD_OPERATOR, yylineno);
+        sscanf(yytext, "%s", &yylval.node->is_string);
+        return PLUS;
+    }
+"-" {
+        debug_info("MINUS");
+        yylval.node=node_init("MINUS", KEYWORD_OPERATOR, yylineno);
+        sscanf(yytext, "%s", &yylval.node->is_string);
+        return MINUS;
+    }
+"*" {
+        debug_info("STAR");
+        yylval.node=node_init("STAR", KEYWORD_OPERATOR, yylineno);
+        sscanf(yytext, "%s", &yylval.node->is_string);
+        return STAR;
+    }
+"/" {
+        debug_info("DIV");
+        yylval.node=node_init("DIV", KEYWORD_OPERATOR, yylineno);
+        sscanf(yytext, "%s", &yylval.node->is_string);
+        return DIV;
+    }
+"&&"    {
+            debug_info("AND");
+            yylval.node=node_init("AND", KEYWORD_OPERATOR, yylineno);
+            sscanf(yytext, "%s", &yylval.node->is_string);
+            return AND;
+        }
+"||"    {
+            debug_info("OR");
+            yylval.node=node_init("OR", KEYWORD_OPERATOR, yylineno);
+            sscanf(yytext, "%s", &yylval.node->is_string);
+            return OR;
+        }
+"." {
+        debug_info("DOT");
+        yylval.node=node_init("DOT", KEYWORD_PUNCTUATION, yylineno);
+        sscanf(yytext, "%s", &yylval.node->is_string);
+        return DOT;
+    }
+"!" {
+        debug_info("NOT");
+        yylval.node=node_init("NOT", KEYWORD_OPERATOR, yylineno);
+        sscanf(yytext, "%s", &yylval.node->is_string);
+        return NOT;
+    }
+{TYPE}  {
+            debug_info("TYPE");
+            yylval.node=node_init("NOT", KEYWORDS, yylineno);
+            sscanf(yytext, "%s", &yylval.node->is_string);
+            return TYPE;
+        }
+"(" {
+        debug_info("LP");
+        yylval.node=node_init("LP", KEYWORD_BRACKET, yylineno);
+        sscanf(yytext, "%s", &yylval.node->is_string);
+        return LP;
+    }
+")" {
+        debug_info("RP");
+        yylval.node=node_init("RP", KEYWORD_BRACKET, yylineno);
+        sscanf(yytext, "%s", &yylval.node->is_string);
+        return RP;
+    }
+"[" {
+        debug_info("LB");
+        yylval.node=node_init("LB", KEYWORD_BRACKET, yylineno);
+        sscanf(yytext, "%s", &yylval.node->is_string);
+        return LB;
+    }
+"]" {
+        debug_info("RB");
+        yylval.node=node_init("RB", KEYWORD_BRACKET, yylineno);
+        sscanf(yytext, "%s", &yylval.node->is_string);
+        return RB;
+    }
+"{" {
+        debug_info("LC");
+        yylval.node=node_init("LC", KEYWORD_BRACKET, yylineno);
+        sscanf(yytext, "%s", &yylval.node->is_string);
+        return LC;
+    }
+"}" {
+        debug_info("RC");
+        yylval.node=node_init("RC", KEYWORD_BRACKET, yylineno);
+        sscanf(yytext, "%s", &yylval.node->is_string);
+        return RC;
+    }
+
+"struct"    {
+                debug_info("STRUCT");
+                yylval.node=node_init("STRUCT", KEYWORDS, yylineno);
+                sscanf(yytext, "%s", &yylval.node->is_string);
+                return STRUCT;
+            }
+"return"    {
+                debug_info("RETURN");
+                yylval.node=node_init("RETURN", KEYWORDS, yylineno);
+                sscanf(yytext, "%s", &yylval.node->is_string);
+                return RETURN;
+            }
+"if"    {
+            debug_info("IF");
+            yylval.node=node_init("IF", KEYWORDS, yylineno);
+            sscanf(yytext, "%s", &yylval.node->is_string);
+            return IF;
+        }
+"else"  {
+            debug_info("ELSE");
+            yylval.node=node_init("ELSE", KEYWORDS, yylineno);
+            sscanf(yytext, "%s", &yylval.node->is_string);
+            return ELSE;
+        }
+"while" {
+            debug_info("WHILE");
+            yylval.node=node_init("WHILE", KEYWORDS, yylineno);
+            sscanf(yytext, "%s", &yylval.node->is_string);
+            return WHILE;
+        }
+
+{ID}    {
+            debug_info("ID");
+            yylval.node=node_init("ID", KEYWORDS, yylineno);
+            sscanf(yytext, "%s", &yylval.node->is_string);
+            return ID;
+        }
 
 "/*"    {
             debug_info("COMMENT");
@@ -105,84 +305,6 @@ WS [ \t\r\n]+
             char temp = input();
             while(temp!='\n')  temp = input();
         }
-
-";" {
-        debug_info("SEMI");
-    }
-"," {
-        debug_info("COMMA");
-    }
-"=" {
-        debug_info("ASSIGNOP");
-    }
-{RELOP}   {
-            debug_info("RELOP");
-        }
-"+" {
-        debug_info("PLUS");
-    }
-"-" {
-        debug_info("MINUS");
-    }
-"*" {
-        debug_info("STAR");
-    }
-"/" {
-        debug_info("DIV");
-    }
-"&&"    {
-            debug_info("AND");
-        }
-"||"    {
-            debug_info("OR");
-        }
-"." {
-        debug_info("DOT");
-    }
-"!" {
-        debug_info("NOT");
-    }
-{TYPE}  {
-            debug_info("TYPE");
-        }
-"(" {
-        debug_info("LP");
-    }
-")" {
-        debug_info("RP");
-    }
-"[" {
-        debug_info("LB");
-    }
-"]" {
-        debug_info("RB");
-    }
-"{" {
-        debug_info("LC");
-    }
-"}" {
-        debug_info("RC");
-    }
-
-"struct"    {
-                debug_info("STRUCT");
-            }
-"return"    {
-                debug_info("RETURN");
-            }
-"if"    {
-            debug_info("IF");
-        }
-"else"  {
-            debug_info("ELSE");
-        }
-"while" {
-            debug_info("WHILE");
-        }
-
-{ID}    {
-            debug_info("ID");
-        }
 {WS}+   {
             //debug_info("WHITE SPACE");
         }
@@ -191,9 +313,3 @@ WS [ \t\r\n]+
         printf("Error type A at Line %d: Mysterious characters \'%s\'.\n",yylineno, yytext);
     }
 %%
-
-int main(void)
-{
-    yyin=stdin;
-    return yylex();
-}
