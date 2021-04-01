@@ -37,7 +37,7 @@ void func(struct AST_Node* s_node,int h){
     if(!s_node->height){
         switch(s_node->type){
             case(LEX_INT):{
-                printf(": %d",s_node->is_int);
+                printf(": %lld",s_node->is_int);
                 break;
             }
             case(LEX_FLOAT):{
