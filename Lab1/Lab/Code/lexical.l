@@ -308,7 +308,7 @@ WS [ \t\r\n]+
             {
                 first = second, second = input();
                 if(second=='\0'){
-                    printf("unterminated comment at %d, missing */\n", yylineno);
+                    printf("unterminated comment at %d, missing */.\n", yylineno);
                     break;
                 }
             }
