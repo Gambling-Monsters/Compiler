@@ -69,9 +69,9 @@ BAD_OCT 0[0-7]*[8-9]+[0-9]*
 DEC 0|[1-9]+[0-9]*
 BAD_DEC [0-9]+[AaC-Wc-wY-Zy-z]+[0-9A-Da-dF-Zf-z]*
 HEX 0[xX][A-Fa-f0-9]+
-BAD_HEX 0[xX][A-Fa-f0-9]*[G-Zg-z]+[A-Za-z]*|[0-9]+[xX]
-FLOAT ({digits}\.{digits}|\.{digits}|{digits}\.|{digits})([eE][+-]?{digits})?
-BAD_FLOAT ({digits}\.{digits}|\.{digits}|{digits}\.|{digits})([eE][+-]?)
+BAD_HEX 0[xX]*[A-Fa-f0-9]*[G-Zg-z]+[A-Za-z0-9]*|[0-9]+[xX]
+FLOAT ({digits}\.{digits}|{digits}\.|{digits})([eE][+-]?{digits})?|(\.{digits}[eE][+-]?{digits})
+BAD_FLOAT ({digits}\.{digits}|\.{digits}|{digits}\.|{digits})([eE][+-]?)|\.{digits}|({digits}\.{digits}*[eE][+-]?{digits}\.{digits})
 
 letter_ [A-Za-z_]
 ID {letter_}({letter_}|{digits})*
@@ -308,7 +308,7 @@ WS [ \t\r\n]+
             {
                 first = second, second = input();
                 if(second=='\0'){
-                    printf("unterminated comment at %d, missing */.\n", yylineno);
+                    printf("Error type B at Line %d: syntax error, no match comment \"/*\".\n", yylineno);
                     break;
                 }
             }
