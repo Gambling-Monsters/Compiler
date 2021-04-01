@@ -20,7 +20,7 @@ struct AST_Node{
     struct AST_Node* next_sib;
     char name[32];
     union{
-        int is_int;
+        long long is_int;
         float is_float;
         char is_string[32];
     };
@@ -83,7 +83,7 @@ WS [ \t\r\n]+
 {BIN}   {
             debug_info("BIN");
             yylval.node=node_init("INT",LEX_INT, yylineno);
-            sscanf(yytext,"%d",&yylval.node->is_int);
+            sscanf(yytext,"%lld",&yylval.node->is_int);
             return INT;
         }
 {BAD_BIN}  {
@@ -96,7 +96,7 @@ WS [ \t\r\n]+
 {OCT}   {
             debug_info("OCT");
             yylval.node=node_init("INT", LEX_INT, yylineno);
-            sscanf(yytext,"%o",&yylval.node->is_int);
+            sscanf(yytext,"%llo",&yylval.node->is_int);
             return INT;
         }
 {BAD_OCT}  {
@@ -109,7 +109,7 @@ WS [ \t\r\n]+
 {DEC}   {   
             debug_info("DEC");
             yylval.node=node_init("INT", LEX_INT, yylineno);
-            sscanf(yytext,"%d",&yylval.node->is_int);
+            sscanf(yytext,"%lld",&yylval.node->is_int);
             return INT;
         }
 {BAD_DEC}  {
@@ -122,7 +122,7 @@ WS [ \t\r\n]+
 {HEX}   {
             debug_info("HEX");
             yylval.node=node_init("INT", LEX_INT, yylineno);
-            sscanf(yytext, "%x", &yylval.node->is_int);
+            sscanf(yytext, "%llx", &yylval.node->is_int);
             return INT;
         }
 {BAD_HEX}  {
@@ -308,7 +308,7 @@ WS [ \t\r\n]+
             {
                 first = second, second = input();
                 if(second=='\0'){
-                    printf("unterminated comment at %d, missing */\n", yylineno);
+                    printf("unterminated comment at %d, missing */.\n", yylineno);
                     break;
                 }
             }
