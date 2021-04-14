@@ -3,6 +3,7 @@
 
 # Object files
 *.o
+*.output
 *.ko
 *.obj
 *.elf
@@ -50,3 +51,8 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+#flex
+syntax.tab.c
+syntax.tab.h
+*.yy.c
