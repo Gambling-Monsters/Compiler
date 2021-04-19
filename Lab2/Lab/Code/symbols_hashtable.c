@@ -251,6 +251,7 @@ ST_node find_struct(char *name)
     return ret_node;
 }
 
+//检测两个类型是否相等
 int type_eq(Type A, Type B)
 {
     FieldList field_A = A->u.my_struct.structure;
@@ -273,11 +274,13 @@ int type_eq(Type A, Type B)
             {
             case BASIC:
             {
+                //数字，这里选择直接返回两者的值相等
                 return (A->u.basic == B->u.basic);
                 break;
             }
             case ARRAY:
             {
+                //数组，这里检测弱相等，即当两者的维度相等时，我们就认为数组相等。
                 int dim_A = 0, dim_B = 0;
                 Type cur_A = A, cur_B = B;
                 while (cur_A != NULL)
@@ -299,6 +302,7 @@ int type_eq(Type A, Type B)
             }
             case STRUCTURE:
             {
+                //检测结构体相等
                 FieldList A_field = A->u.my_struct.structure;
                 FieldList B_field = B->u.my_struct.structure;
                 while (A_field != NULL && B_field != NULL)
@@ -307,6 +311,7 @@ int type_eq(Type A, Type B)
                         return 0;
                     else
                     {
+                        //若为数组则检查数组强相等，若不为数组则检查类型相等
                         if (A_field->type->kind == ARRAY)
                         {
                             if (strong_array_check(A_field->type, B_field->type) == 0)
@@ -321,6 +326,7 @@ int type_eq(Type A, Type B)
                     A_field = A_field->tail;
                     B_field = B_field->tail;
                 }
+                //若两者不等长，则返回0，反之返回1
                 if (A_field != NULL || B_field != NULL)
                     return 0;
                 else
@@ -331,13 +337,15 @@ int type_eq(Type A, Type B)
             {
                 FieldList A_paras = A->u.function.paras;
                 FieldList B_paras = B->u.function.paras;
+                //比较函数的参数数是否相等
                 if ((A->u.function.para_num != B->u.function.para_num) ||
                     type_eq(A->u.function.ret_para, B->u.function.ret_para) == 0)
                     return 0;
                 else
                 {
                     while (A_paras != NULL && B_paras != NULL)
-                    {
+                    {   
+                        //逐个比较函数的参数类型是否相等
                         if (type_eq(A_paras->type, B_paras->type) == 0)
                             return 0;
                         else
@@ -361,7 +369,7 @@ int type_eq(Type A, Type B)
     }
 }
 
-//
+//检测两个数组是否强等价。
 int strong_array_check(Type A, Type B)
 {
     int ret_val = 0;
