@@ -1,4 +1,4 @@
-path="../Test/"
+path="Tests/"
 files=$(ls $path)
 for filename in $files
 do
