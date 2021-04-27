@@ -35,7 +35,6 @@ int query_symbol_exist(Type* type,char*name,int*ifdef,int depth);
 int query_symbol_exist2(Type* type,char*name,int*ifdef,int depth,int*kind);
 int query_symbol_name(char*name,int depth);
 int query_symbol(Type* type,char*name,int*ifdef,int depth);
-void exit_scope();
 struct FieldList_
 {
     char *name;     //域的名字;
