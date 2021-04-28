@@ -183,8 +183,10 @@ void add_func(char *name, int func_lineno)
         cur = cur->next;
     }
     
-    strcpy(cur->name, name);
+    //strcpy(cur->name, name);
+    cur->name= name;
     cur->fun_lineno = func_lineno;
+    
     cur->next = NULL;
 }
 
