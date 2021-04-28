@@ -11,7 +11,7 @@ func_list func_head = NULL;
 hash_stack ST_init()
 //init_symboltable()
 {
-    hash_stack domain_head = malloc(sizeof(struct hash_stack_));
+    domain_head = malloc(sizeof(struct hash_stack_));
     domain_head->next = NULL;
     domain_head->head = NULL;
     return domain_head;
@@ -133,7 +133,7 @@ hash_stack enter_domain()
     ret->next = NULL;
     ret->head = NULL;
     hash_stack tail = domain_head;
-    while (tail->next != NULL)
+    while (tail != NULL && tail->next != NULL)
         tail = tail->next;
     tail->next = ret;
     return ret;

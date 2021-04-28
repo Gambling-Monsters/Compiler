@@ -7,11 +7,11 @@
 #include <string.h>
 #include <assert.h>
 
-typedef struct Type_ *Type;
-typedef struct FieldList_ *FieldList;
-typedef struct ST_node_ *ST_node;
-typedef struct hash_stack_ *hash_stack;
-typedef struct func_list_ *func_list;
+typedef struct Type_* Type;
+typedef struct FieldList_* FieldList;
+typedef struct ST_node_* ST_node;
+typedef struct hash_stack_* hash_stack;
+typedef struct func_list_* func_list;
 
 hash_stack ST_init();
 ST_node init_symbol(Type type, char *name, int is_define, int depth);
@@ -29,12 +29,12 @@ ST_node find_struct(char *name);
 int type_eq(Type A, Type B);
 int strong_array_check(Type A, Type B);
 unsigned int hash_pjw(char *name);
-int query_struct_name(char*name);
-int query_struct(Type*type,char*name);
-int query_symbol_exist(Type* type,char*name,int*ifdef,int depth);
-int query_symbol_exist2(Type* type,char*name,int*ifdef,int depth,int*kind);
-int query_symbol_name(char*name,int depth);
-int query_symbol(Type* type,char*name,int*ifdef,int depth);
+int query_struct_name(char *name);
+int query_struct(Type *type, char *name);
+int query_symbol_exist(Type *type, char *name, int *ifdef, int depth);
+int query_symbol_exist2(Type *type, char *name, int *ifdef, int depth, int *kind);
+int query_symbol_name(char *name, int depth);
+int query_symbol(Type *type, char *name, int *ifdef, int depth);
 struct FieldList_
 {
     char *name;     //域的名字;
@@ -80,7 +80,12 @@ struct Type_
 struct ST_node_
 {
     //加点东西
-    enum { VARIABLE=0, STRUCT_NAME=1, FUNCTION_NAME=2 } kind;
+    enum
+    {
+        VARIABLE = 0,
+        STRUCT_NAME = 1,
+        FUNCTION_NAME = 2
+    } kind;
     //定义or声明(0/1)
     int is_define;
     char *name;
