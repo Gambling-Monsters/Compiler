@@ -105,7 +105,7 @@ void delete_node(char *name, int depth, hash_stack domain)
     ST_node HT_iter = (ST_node)malloc(sizeof(struct ST_node_));
     HT_iter->hash_next = global_head[idx].head;
     ST_node domain_iter = (ST_node)malloc(sizeof(struct ST_node_));
-    domain_iter->ctrl_next = domain_head->head;
+    domain_iter->ctrl_next = domain->head;
 
     while (domain_iter->ctrl_next != node_del)
         domain_iter = domain_iter->ctrl_next;
@@ -117,9 +117,9 @@ void delete_node(char *name, int depth, hash_stack domain)
     HT_iter->hash_next = node_del->hash_next;
     domain_iter->ctrl_next = node_del->ctrl_next;
     global_head[idx].head = HT_iter->hash_next;
-    domain_head->head = domain_iter->ctrl_next;
+    domain->head = domain_iter->ctrl_next;
 
-    free_node(node_del);
+    //free_node(node_del);
 
     return;
 }
