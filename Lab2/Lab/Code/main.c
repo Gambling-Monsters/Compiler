@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "syntax.tab.h"
+#include "sem.h"
 extern FILE *yyin;
 extern int yydebug;
 extern int lexError;
@@ -7,7 +8,7 @@ extern int synErr;
 extern struct AST_Node *root;
 
 int yylex();
-void func(struct AST_Node* s_node,int h);
+void func(struct AST_Node *s_node, int h);
 void yyrestart(FILE *f);
 
 int main(int argc, char **argv)
@@ -23,9 +24,13 @@ int main(int argc, char **argv)
     }
     yyrestart(f);
     yyparse();
-    if (lexError == 0 && synErr == 0)
+    if (lexError == 0)
     {
-        func(root, 0);
+        if (synErr == 0)
+        {
+            //func(root,0);
+            checkStart(root);
+        }
     }
     return 0;
 };
