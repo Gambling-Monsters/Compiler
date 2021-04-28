@@ -152,6 +152,7 @@ int Program_check(struct AST_Node *cur_node)
 {
     //Program -> ExfDefList
     Table = ST_init();
+
     ExtDefList_check(AST_getChild(cur_node, 0));
 
     check_func();
@@ -162,7 +163,9 @@ int ExtDefList_check(struct AST_Node *cur_node)
 {
     //ExfDefList -> ExfDef ExfDefList
     //| (empty)
+    
     ExtDef_s(AST_getChild(cur_node, 0));
+
     if (AST_getChild(cur_node, 1) != NULL)
         ExtDefList_check(AST_getChild(cur_node, 1));
     return 0;
@@ -202,10 +205,13 @@ int ExtDef_s(struct AST_Node *cur_node)
             }
             else
             {
-                FunDec_s(tmp_node1, 1, tmp_type, new_hashstack1);
+                hash_stack new_hashstack1 = enter_domain();
+                FunDec_s(FunDec_node, 1, tmp_type, new_hashstack1);
+
                 struct AST_Node *CompSt_node = tmp_node2;
                 depth_++;
                 CompSt_s(CompSt_node, new_hashstack1, tmp_type);
+
                 depth_--;
                 exit_domain();
             }
@@ -226,9 +232,10 @@ int CompSt_s(struct AST_Node *cur_node, hash_stack cur_stack, Type cur_type)
     struct AST_Node *tmp_node1 = AST_getChild(cur_node, 1);
     //printf("here.\n");
     //printf("%s\n",tmp_node1->name);
-    if (strcmp(tmp_node1->name,"DefList")==0)
-    {          
-        DefList_s(tmp_node1, cur_stack); 
+    if (strcmp(tmp_node1->name, "DefList") == 0)
+    {
+
+        DefList_s(tmp_node1, cur_stack);
         //printf("here.\n");
         //printf("here.\n");
         struct AST_Node *StmtList_node = AST_getChild(cur_node, 2);
@@ -346,10 +353,10 @@ int DefList_s(struct AST_Node *cur_node, hash_stack cur_stack)
 int Def_s(struct AST_Node *cur_node, hash_stack cur_stack)
 {
     //	Def -> Specifier DecList SEMI
+    
     Type Speci_type = Specifier_s(AST_getChild(cur_node, 0));
 
     DecList_s(AST_getChild(cur_node, 1), cur_stack, Speci_type);
-
     //printf("here4753.\n");
 
     return 0;
@@ -445,12 +452,14 @@ Type Exp_s(struct AST_Node *cur_node)
 	| INT
 	| FLOAT
 	*/
+//printf("here2\n");
     if (cur_node == NULL)
         return NULL;
     Type result = NULL;
     struct AST_Node *tmp_node0 = AST_getChild(cur_node, 0);
     struct AST_Node *tmp_node1 = AST_getChild(cur_node, 1);
     //左值: ID,EXP DOT ID(结构体) Exp LB Exp RB (数组)
+    
     if (strcmp(tmp_node0->name, "Exp") == 0)
     {
         if (tmp_node1 != NULL && strcmp(tmp_node1->name, "ASSIGNOP") == 0) //Exp -> Exp ASSIGNOP Exp
@@ -591,8 +600,10 @@ Type Exp_s(struct AST_Node *cur_node)
             result = exp1type;
             return result;
         }
+        printf("here2\n");
         if (strcmp(tmp_node0->name, "ID") == 0)
         {
+            
             char *funcname = tmp_node0->is_string;
             Type querytype = (Type)(malloc(sizeof(struct Type_)));
             int queryifdef = -1;
@@ -615,6 +626,7 @@ Type Exp_s(struct AST_Node *cur_node)
             {
                 if (querytype->u.function.paras == NULL)
                 {
+                    
                     print_error(9, cur_node->lineno, NULL);
                     return NULL;
                 }
@@ -630,8 +642,10 @@ Type Exp_s(struct AST_Node *cur_node)
                             break;
                         cntnode = AST_getChild(cntnode, 2);
                     }
+                    //printf("cnt=%d but should be %d\n",cnt,querytype->u.function.para_num);
                     if (cnt != querytype->u.function.para_num)
                     {
+                        
                         print_error(9, cur_node->lineno, NULL);
                         return NULL;
                     }
@@ -646,6 +660,7 @@ Type Exp_s(struct AST_Node *cur_node)
             {
                 if (querytype->u.function.paras != NULL)
                 {
+                    
                     print_error(9, cur_node->lineno, NULL);
                     return NULL;
                 }
@@ -732,6 +747,7 @@ int Arg_s(struct AST_Node *cur_node, FieldList paras)
     //struct AST_Node *tmp_node1 = AST_getChild(cur_node, 1);
     if (paras == NULL)
     { //参数NULL，报错9
+    
         print_error(9, cur_node->lineno, NULL);
         return -1;
     }
@@ -1182,6 +1198,7 @@ int ExtDecList(struct AST_Node *cur_node, Type cur_type)
     /*ExtDecList -> VarDec
     | VarDec COMMA ExtDecList
     */
+   //print_error(9
     FieldList VarDec_field = VarDec_s(AST_getChild(cur_node, 0), cur_type);
     if (query_symbol_name(VarDec_field->name, depth_) == 0) //重复定义，报错3
         print_error(3, cur_node->lineno, VarDec_field->name);
