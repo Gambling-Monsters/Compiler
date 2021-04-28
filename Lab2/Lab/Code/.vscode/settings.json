@@ -3,6 +3,7 @@
         "*.cjson": "jsonc",
         "*.wxss": "css",
         "*.wxs": "javascript",
-        "symbols_hashtable.h": "c"
+        "symbols_hashtable.h": "c",
+        "semantic.h": "c"
     }
 }

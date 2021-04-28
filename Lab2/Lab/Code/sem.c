@@ -29,7 +29,7 @@ struct AST_Node *AST_getChild(struct AST_Node *cur_node, int depth)
         temp = temp->next_sib;
     return temp;
 }
-
+//type_eq
 void print_error(int err_type, int err_col, char *message)
 {
     printf("Error type %d at Line %d: ", err_type, err_col);
@@ -163,7 +163,7 @@ int ExtDefList_check(struct AST_Node *cur_node)
 {
     //ExfDefList -> ExfDef ExfDefList
     //| (empty)
-
+    
     ExtDef_s(AST_getChild(cur_node, 0));
 
     if (AST_getChild(cur_node, 1) != NULL)
@@ -177,6 +177,7 @@ int ExtDef_s(struct AST_Node *cur_node)
     // | Specifier SEMI
     // | Specifier FunDec CompSt
     // | Specifier FunDec SEMI
+    
     Type tmp_type = NULL;
     struct AST_Node *tmp_node1 = AST_getChild(cur_node, 1);
     struct AST_Node *tmp_node2 = AST_getChild(cur_node, 2);
@@ -352,7 +353,7 @@ int DefList_s(struct AST_Node *cur_node, hash_stack cur_stack)
 int Def_s(struct AST_Node *cur_node, hash_stack cur_stack)
 {
     //	Def -> Specifier DecList SEMI
-
+    
     Type Speci_type = Specifier_s(AST_getChild(cur_node, 0));
 
     DecList_s(AST_getChild(cur_node, 1), cur_stack, Speci_type);
@@ -564,9 +565,12 @@ Type Exp_s(struct AST_Node *cur_node)
                 struct AST_Node *Expnode2 = tempnode3;
                 Type exp1type = Exp_s(Expnode1);
                 Type exp2type = Exp_s(Expnode2);
+                //printf("%d\n",exp1type->kind);
+                //printf("%d\n",exp2type->kind);
                 if (exp1type != NULL && exp2type != NULL)
                 {
                     int tempresult = type_eq(exp1type, exp2type);
+                    //printf("%d\n",tempresult);
                     if (tempresult == 0 && 0 == strcmp(tmp_node1->name, "ASSIGNOP"))
                     {
                         print_error(5, cur_node->lineno, NULL);
@@ -785,7 +789,7 @@ int FunDec_s(struct AST_Node *cur_node, const int ifdef, const Type res_type, ha
         query_ifdef = ret_node->is_define;
         query_type = ret_node->type;
     }
-    printf("%d\n",result);
+    //printf("%d\n",result);
     int flag = 0;
     struct AST_Node *tempnode = AST_getChild(cur_node, 2);
     Type functiontype = (Type)(malloc(sizeof(struct Type_)));
@@ -811,6 +815,7 @@ int FunDec_s(struct AST_Node *cur_node, const int ifdef, const Type res_type, ha
         }
         functiontype->u.function.para_num = cnt;
         functiontype->u.function.paras = params;
+        //printf("mark\n");
         //printf("mark\n");
     }
     functiontype->kind = FUNCTION;
@@ -848,13 +853,17 @@ int FunDec_s(struct AST_Node *cur_node, const int ifdef, const Type res_type, ha
     }
     else
     {
+        //printf("mark\n");
         ST_node insert_node = new_STnode(FUNCTION_NAME, functiontype, funcname, ifdef, depth_);
         //printf("here.\n");
         insert_symbol(insert_node, Table);
         //printf("here.\n");
+        //printf("%d\n",ifdef);
         if (ifdef == 0)
         {
+            //printf("here1.\n");
             add_func(funcname, cur_node->lineno);
+            //printf("here2.\n");
         }
         //printf("here.\n");
     }
@@ -1146,7 +1155,7 @@ FieldList VarDec_s(struct AST_Node *cur_node, Type cur_type)
             cnt++;
         }
         struct Type_ **type_list = (struct Type_ **)malloc(sizeof(struct Type_ **) * (cnt + 2));
-        strcpy(tmp_field->name, tmp_node0->is_string);
+        tmp_field->name=tmp_node0->is_string;
         tmp_node0 = AST_getChild(cur_node, 0);
         struct AST_Node *INT_node1 = NULL;
         Type temp_type1 = NULL;
