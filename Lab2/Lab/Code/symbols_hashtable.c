@@ -70,8 +70,7 @@ ST_node find_symbol(char *name, int depth)
         //目前的深度应该深于查找节点的深度, 我们只需选择最深的那一个
         if (strcmp(cur->name, name) == 0 && depth >= cur->depth)
             ret_node = cur;
-        else
-            cur = cur->hash_next;
+        cur = cur->hash_next;
     }
     return ret_node;
 }
