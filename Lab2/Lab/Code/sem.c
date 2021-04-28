@@ -172,6 +172,7 @@ int ExtDef_s(struct AST_Node *cur_node)
     struct AST_Node *tmp_node2 = AST_getChild(cur_node, 2);
     if (AST_getChild(cur_node, 0) != NULL)
         tmp_type = Specifier_s(AST_getChild(cur_node, 0));
+
     if (tmp_node2 != NULL)
     {
         if (tmp_node1 != NULL && strcmp(tmp_node1->name, "ExtDecList") == 0)
@@ -716,11 +717,19 @@ int FunDec_s(struct AST_Node *cur_node, const int ifdef, const Type res_type, ha
 {
     //FunDec -> ID LP VarList RP
     //| ID LP RP
-    Type query_type = NULL;
-    int query_ifdef;
     struct AST_Node *IDnode = AST_getChild(cur_node, 0);
     char *funcname = IDnode->is_string;
-    int result = query_symbol(&query_type, funcname, &query_ifdef, depth_); //因为函数都是最外层声明的,所以不需要用query_symbol_exist
+
+    ST_node ret_node = find_symbol(funcname, depth_);
+    int query_ifdef = 0;
+    Type query_type = NULL;
+    int result = -1;
+    if(ret_node != NULL)
+    {
+        result = 0;
+        query_ifdef = ret_node->is_define;
+        query_type = ret_node->type;
+    }
     int flag = 0;
     struct AST_Node *tempnode = AST_getChild(cur_node, 2);
     Type functiontype = (Type)(malloc(sizeof(struct Type_)));
@@ -1091,7 +1100,7 @@ int ExtDecList(struct AST_Node *cur_node, Type cur_type)
     | VarDec COMMA ExtDecList
     */
     FieldList VarDec_field = VarDec_s(AST_getChild(cur_node, 0), cur_type);
-    if (query_symbol_name(VarDec_field->name, depth_) == 0)//重复定义，报错3
+    if (query_symbol_name(VarDec_field->name, depth_) == 0) //重复定义，报错3
         print_error(3, cur_node->lineno, VarDec_field->name);
     ST_node Insert_node = new_STnode(VARIABLE, VarDec_field->type, VarDec_field->name, 1, depth_);
     insert_symbol(Insert_node, Table);
