@@ -170,11 +170,12 @@ void exit_domain()
 void add_func(char *name, int func_lineno)
 //push_function_dec(char*name,int column)
 {
-    //printf("here.\n");
-    //printf("here.\n");
     func_list cur = func_head;
     if (cur == NULL)
+    {
         cur = (func_list)malloc(sizeof(struct func_list_));
+        func_head = cur;
+    }
     else
     {
         while (cur->next != NULL)
@@ -182,12 +183,12 @@ void add_func(char *name, int func_lineno)
         cur->next = (func_list)malloc(sizeof(struct func_list_));
         cur = cur->next;
     }
-    
-    //strcpy(cur->name, name);
-    cur->name= name;
+
+    cur->name = name;
     cur->fun_lineno = func_lineno;
-    
+
     cur->next = NULL;
+    return;
 }
 
 //完成后对于函数进行检查
@@ -320,7 +321,7 @@ int type_eq(Type A, Type B)
                 FieldList B_field = B->u.my_struct.structure;
                 while (A_field != NULL && B_field != NULL)
                 {
-                    if (A_field->type != B_field->type)
+                    if (A_field->type->kind != B_field->type->kind)
                         return 0;
                     else
                     {
@@ -357,7 +358,7 @@ int type_eq(Type A, Type B)
                 else
                 {
                     while (A_paras != NULL && B_paras != NULL)
-                    {   
+                    {
                         //逐个比较函数的参数类型是否相等
                         if (type_eq(A_paras->type, B_paras->type) == 0)
                             return 0;
@@ -386,11 +387,11 @@ int type_eq(Type A, Type B)
 int strong_array_check(Type A, Type B)
 {
     int ret_val = 0;
-    if((A->u.array.size!=B->u.array.size)||
-    (A->u.array.elem->kind!=B->u.array.elem->kind))
+    if ((A->u.array.size != B->u.array.size) ||
+        (A->u.array.elem->kind != B->u.array.elem->kind))
         return 0;
-    
-    if(A->u.array.elem->kind == ARRAY)
+
+    if (A->u.array.elem->kind == ARRAY)
         ret_val = strong_array_check(A->u.array.elem, B->u.array.elem);
     else
         ret_val = type_eq(A->u.array.elem, B->u.array.elem);
@@ -411,115 +412,96 @@ unsigned int hash_pjw(char *name)
 }
 
 //加点东西
-int query_struct_name(char*name){
-	Type nulltype=(Type)malloc(sizeof(struct Type_));
-	
-	return query_struct(&nulltype,name);
+int query_struct(Type *type, char *name)
+{
+    int value = hash_pjw(name);
+    if (struct_head[value].head == NULL)
+        return -1;
+    else
+    {
+        ST_node temp = struct_head[value].head;
+        int flag = 0;
+        while (temp != NULL)
+        {
+            if (strcmp(temp->name, name) == 0)
+            {
+                *type = temp->type;
+                flag = 1;
+                return 0;
+            }
+            temp = temp->hash_next;
+            if (temp == NULL)
+                break;
+        }
+        if (flag == 0)
+            return -1;
+    }
 }
 
-int query_struct(Type*type,char*name){
-	int value=hash_pjw(name);
-	if(struct_head[value].head==NULL){
-		return -1;
-	}
-	else{
-		ST_node temp=struct_head[value].head;
-		int flag=0;
-		while(temp!=NULL){
-			if(strcmp(temp->name,name)==0){
-				*type=temp->type;
-				flag=1;
-				return 0;
-			}
-			temp=temp->hash_next;
-			if(temp==NULL){
-				break;
-			}
-		}
-		if(flag==0){
-			return -1;
-		}
-	}
+int query_symbol_exist_mrk(Type *type, char *name, int *ifdef, int depth, int mrk)
+{
+    int value = hash_pjw(name);
+    if (global_head[value].head == NULL)
+        return -1;
+    else
+    {
+        ST_node temp = global_head[value].head;
+        int flag = 0;
+        while (temp != NULL)
+        {
+            if (mrk == 1)
+            {
+                if (strcmp(temp->name, name) == 0 && depth >= temp->depth)
+                {
+                    *type = temp->type;
+                    *ifdef = temp->is_define;
+                    flag = 1;
+                    return 0;
+                }
+            }
+            else if (mrk == 0)
+            {
+                if (strcmp(temp->name, name) == 0 && depth == temp->depth)
+                {
+                    *type = temp->type;
+                    *ifdef = temp->is_define;
+                    flag = 1;
+                    return 0;
+                }
+            }
+            temp = temp->hash_next;
+            if (temp == NULL)
+                break;
+        }
+        if (flag == 0)
+            return -1;
+    }
 }
 
-int query_symbol_exist(Type* type,char*name,int*ifdef,int depth){
-	int value=hash_pjw(name);
-	if(global_head[value].head==NULL){
-		return -1;
-	}else{
-		ST_node temp=global_head[value].head;
-		int flag=0;
-		while(temp!=NULL){
-			if(strcmp(temp->name,name)==0&&depth>=temp->depth){
-				*type=temp->type;
-				*ifdef=temp->is_define;
-				flag=1;
-				return 0;
-			}
-			temp=temp->hash_next;
-			if(temp==NULL){
-				break;
-			}
-		}
-		if(flag==0){
-			return -1;
-		}
-	}
-}
-
-int query_symbol_exist2(Type* type,char*name,int*ifdef,int depth,int*kind){//存在 return 0,不存在return -1
-	int value=hash_pjw(name);
-	if(global_head[value].head==NULL){
-		return -1;
-	}else{
-		ST_node temp=global_head[value].head;
-		int flag=0;
-		while(temp!=NULL){
-			if(strcmp(temp->name,name)==0&&depth>=temp->depth){
-				*type=temp->type;
-				*ifdef=temp->is_define;
-				*kind=temp->kind;
-				flag=1;
-				return 0;
-			}
-			temp=temp->hash_next;
-			if(temp==NULL){
-				break;
-			}
-		}
-		if(flag==0){
-			return -1;
-		}
-	}
-}
-
-int query_symbol_name(char*name,int depth){
-	Type nulltype=(Type)malloc(sizeof(struct Type_));
-	int nulldef;
-	return query_symbol(&nulltype,name,&nulldef,depth);
-}
-
-int query_symbol(Type* type,char*name,int*ifdef,int depth){//存在 return 0,不存在return -1
-	int value=hash_pjw(name);
-	if(global_head[value].head==NULL){
-		return -1;
-	}else{
-		ST_node temp=global_head[value].head;
-		int flag=0;
-		while(temp!=NULL){
-			if(strcmp(temp->name,name)==0&&depth==temp->depth){
-				*type=temp->type;
-				*ifdef=temp->is_define;
-				flag=1;
-				return 0;
-			}
-			temp=temp->hash_next;
-			if(temp==NULL){
-				break;
-			}
-		}
-		if(flag==0){
-			return -1;
-		}
-	}
+int query_symbol_exist2(Type *type, char *name, int *ifdef, int depth, int *kind)
+{ //存在 return 0,不存在return -1
+    int value = hash_pjw(name);
+    if (global_head[value].head == NULL)
+        return -1;
+    else
+    {
+        ST_node temp = global_head[value].head;
+        int flag = 0;
+        while (temp != NULL)
+        {
+            if (strcmp(temp->name, name) == 0 && depth >= temp->depth)
+            {
+                *type = temp->type;
+                *ifdef = temp->is_define;
+                *kind = temp->kind;
+                flag = 1;
+                return 0;
+            }
+            temp = temp->hash_next;
+            if (temp == NULL)
+                break;
+        }
+        if (flag == 0)
+            return -1;
+    }
 }
