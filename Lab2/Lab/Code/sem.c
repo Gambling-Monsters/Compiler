@@ -88,7 +88,14 @@ int ExtDef_s(struct AST_Node *cur_node)
                 depth_ -= 1;
                 exit_domain();
             }
+<<<<<<< Updated upstream
         };
+=======
+            //assert(0);
+            exit_domain();
+            assert(0);
+        }
+>>>>>>> Stashed changes
     }
     return 0;
 }

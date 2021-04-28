@@ -146,6 +146,11 @@ ExtDef:Specifier ExtDecList SEMI{
         $$=bison_init("ExtDef",locline);
         bison_insert($$,3,$1,$2,$3); 
     };
+    |Specifier FunDec SEMI{
+        int locline=@$.first_line;
+        $$=bison_init("ExtDef",locline);
+        bison_insert($$,3,$1,$2,$3); 
+    };
     //错误恢复
     |error SEMI{
         synErr+=1;
