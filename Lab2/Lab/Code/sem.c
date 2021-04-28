@@ -232,9 +232,10 @@ int CompSt_s(struct AST_Node *cur_node, hash_stack cur_stack, Type cur_type)
     struct AST_Node *tmp_node1 = AST_getChild(cur_node, 1);
     //printf("here.\n");
     //printf("%s\n",tmp_node1->name);
+    
     if (strcmp(tmp_node1->name, "DefList") == 0)
     {
-
+        //printf("here\n");
         DefList_s(tmp_node1, cur_stack);
         //printf("here.\n");
         //printf("here.\n");
@@ -243,7 +244,7 @@ int CompSt_s(struct AST_Node *cur_node, hash_stack cur_stack, Type cur_type)
         if (strcmp(StmtList_node->name, "StmtList") == 0)
             StmtList_s(StmtList_node, cur_stack, cur_type);
     }
-    else if (strcmp(tmp_node1->name, "DefList") == 0)
+    else if (strcmp(tmp_node1->name, "StmtList") == 0)
     {
         //struct AST_Node *StmtList_node = tmp_node1;
         StmtList_s(tmp_node1, cur_stack, cur_type);
@@ -257,6 +258,7 @@ int StmtList_s(struct AST_Node *cur_node, hash_stack cur_stack, Type cur_type)
     // StmtList -> Stmt StmtList
     // | 空
     //struct AST_Node *Stmt_node = AST_getChild(cur_node, 0);
+    
     struct AST_Node *tmp_node1 = AST_getChild(cur_node, 1);
     Stmt_s(AST_getChild(cur_node, 0), cur_stack, cur_type);
     if (tmp_node1 != NULL)
@@ -271,6 +273,7 @@ int Stmt_s(struct AST_Node *cur_node, hash_stack cur_stack, Type cur_type)
     // | IF LP Exp RP Stmt
     // | IF LP Exp RP Stmt ELSE Stmt
     // | WHILE LP Exp RP Stmt
+    
     struct AST_Node *tmp_node0 = AST_getChild(cur_node, 0);
     if (strcmp(tmp_node0->name, "Exp") == 0) // Stmt -> Exp SEMI
     {
@@ -600,7 +603,7 @@ Type Exp_s(struct AST_Node *cur_node)
             result = exp1type;
             return result;
         }
-        printf("here2\n");
+        //printf("here2\n");
         if (strcmp(tmp_node0->name, "ID") == 0)
         {
             
