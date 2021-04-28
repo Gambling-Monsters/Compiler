@@ -9,6 +9,7 @@ func_list func_head = NULL;
 
 //初始符号表
 hash_stack ST_init()
+//init_symboltable()
 {
     hash_stack domain_head = malloc(sizeof(struct hash_stack_));
     domain_head->next = NULL;
@@ -29,6 +30,7 @@ ST_node init_symbol(Type type, char *name, int is_define, int depth)
 
 //插入节点
 void insert_symbol(ST_node my_node, hash_stack domain)
+//insert_symbol2(struct Symbol_node*p,struct Symbol_bucket* scope)
 {
     int idx = hash_pjw(my_node->name);
 
@@ -125,6 +127,7 @@ void delete_node(char *name, int depth, hash_stack domain)
 
 //进入域之前进行调用
 hash_stack enter_domain()
+//enter_scope()
 {
     hash_stack ret = malloc(sizeof(struct hash_stack_));
     ret->next = NULL;
@@ -138,6 +141,7 @@ hash_stack enter_domain()
 
 //离开域时调用,批量删除局部变量代表的符号
 void exit_domain()
+//exit_scope()
 {
     hash_stack domain_iter = domain_head;
     hash_stack domain_del = domain_iter;
@@ -165,6 +169,7 @@ void exit_domain()
 
 //在函数表中添加函数名和函数位置
 void add_func(char *name, int func_lineno)
+//push_function_dec(char*name,int column)
 {
     func_list cur = func_head;
     if (cur == NULL)
@@ -183,6 +188,7 @@ void add_func(char *name, int func_lineno)
 
 //完成后对于函数进行检查
 void check_func()
+//check_function_def()
 {
     func_list cur = func_head;
     while (cur != NULL)
@@ -200,6 +206,7 @@ void check_func()
 
 //向结构体符号表中插入符号，0为正常，1为结构体重定义。
 int insert_struct(Type type, char *name)
+//insert_struct(Type type,char*name)
 {
     int idx = hash_pjw(name);
     if (struct_head[idx].head == NULL)
@@ -236,6 +243,7 @@ int insert_struct(Type type, char *name)
 
 //返回的结构体，只需要一个参数，即结构体名
 ST_node find_struct(char *name)
+//query_struct(Type*type,char*name)
 {
     int idx = hash_pjw(name);
     ST_node cur = struct_head[idx].head;
@@ -253,6 +261,7 @@ ST_node find_struct(char *name)
 
 //检测两个类型是否相等
 int type_eq(Type A, Type B)
+//check_type(Type A,Type B)
 {
     FieldList field_A = A->u.my_struct.structure;
     FieldList field_B = B->u.my_struct.structure;
@@ -395,4 +404,118 @@ unsigned int hash_pjw(char *name)
             val = (val ^ (i >> 12)) & SYMBOL_LEN;
     }
     return val;
+}
+
+//加点东西
+int query_struct_name(char*name){
+	Type nulltype=(Type)malloc(sizeof(struct Type_));
+	
+	return query_struct(&nulltype,name);
+}
+
+int query_struct(Type*type,char*name){
+	int value=hash_pjw(name);
+	if(struct_head[value].head==NULL){
+		return -1;
+	}
+	else{
+		ST_node temp=struct_head[value].head;
+		int flag=0;
+		while(temp!=NULL){
+			if(strcmp(temp->name,name)==0){
+				*type=temp->type;
+				flag=1;
+				return 0;
+			}
+			temp=temp->hash_next;
+			if(temp==NULL){
+				break;
+			}
+		}
+		if(flag==0){
+			return -1;
+		}
+	}
+}
+
+int query_symbol_exist(Type* type,char*name,int*ifdef,int depth){
+	int value=hash_pjw(name);
+	if(global_head[value].head==NULL){
+		return -1;
+	}else{
+		ST_node temp=global_head[value].head;
+		int flag=0;
+		while(temp!=NULL){
+			if(strcmp(temp->name,name)==0&&depth>=temp->depth){
+				*type=temp->type;
+				*ifdef=temp->is_define;
+				flag=1;
+				return 0;
+			}
+			temp=temp->hash_next;
+			if(temp==NULL){
+				break;
+			}
+		}
+		if(flag==0){
+			return -1;
+		}
+	}
+}
+
+int query_symbol_exist2(Type* type,char*name,int*ifdef,int depth,int*kind){//存在 return 0,不存在return -1
+	int value=hash_pjw(name);
+	if(global_head[value].head==NULL){
+		return -1;
+	}else{
+		ST_node temp=global_head[value].head;
+		int flag=0;
+		while(temp!=NULL){
+			if(strcmp(temp->name,name)==0&&depth>=temp->depth){
+				*type=temp->type;
+				*ifdef=temp->is_define;
+				*kind=temp->kind;
+				flag=1;
+				return 0;
+			}
+			temp=temp->hash_next;
+			if(temp==NULL){
+				break;
+			}
+		}
+		if(flag==0){
+			return -1;
+		}
+	}
+}
+
+int query_symbol_name(char*name,int depth){
+	Type nulltype=(Type)malloc(sizeof(struct Type_));
+	int nulldef;
+	return query_symbol(&nulltype,name,&nulldef,depth);
+}
+
+int query_symbol(Type* type,char*name,int*ifdef,int depth){//存在 return 0,不存在return -1
+	int value=hash_pjw(name);
+	if(global_head[value].head==NULL){
+		return -1;
+	}else{
+		ST_node temp=global_head[value].head;
+		int flag=0;
+		while(temp!=NULL){
+			if(strcmp(temp->name,name)==0&&depth==temp->depth){
+				*type=temp->type;
+				*ifdef=temp->is_define;
+				flag=1;
+				return 0;
+			}
+			temp=temp->hash_next;
+			if(temp==NULL){
+				break;
+			}
+		}
+		if(flag==0){
+			return -1;
+		}
+	}
 }
