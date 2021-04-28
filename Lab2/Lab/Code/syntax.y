@@ -30,7 +30,7 @@ void bison_insert(struct AST_Node *top_node,int num_args,...){
     }
 }
 //打印树
-/*
+
 void func(struct AST_Node* s_node,int h){
     if(s_node==NULL) return;
     for(int i=1;i<=h;i++) printf("  ");
@@ -60,7 +60,7 @@ void func(struct AST_Node* s_node,int h){
     func(s_node->child,h+1);
     func(s_node->next_sib,h);
 }
-*/
+
 
 int yyerror(char*msg){
     synErr+=1;
