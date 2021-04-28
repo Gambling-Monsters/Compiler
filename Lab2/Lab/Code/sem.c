@@ -153,7 +153,6 @@ int Program_check(struct AST_Node *cur_node)
 {
     //Program -> ExfDefList
     Table = ST_init();
-    
     ExtDefList_check(AST_getChild(cur_node, 0));
     
     check_func();
@@ -165,7 +164,6 @@ int ExtDefList_check(struct AST_Node *cur_node)
     //ExfDefList -> ExfDef ExfDefList
     //| (empty)
     ExtDef_s(AST_getChild(cur_node, 0));
-    
     if (AST_getChild(cur_node, 1) != NULL)
         ExtDefList_check(AST_getChild(cur_node, 1));
     return 0;
@@ -182,7 +180,7 @@ int ExtDef_s(struct AST_Node *cur_node)
     struct AST_Node *tmp_node2 = AST_getChild(cur_node, 2);
     if (AST_getChild(cur_node, 0) != NULL)
         tmp_type = Specifier_s(AST_getChild(cur_node, 0));
-   
+
     if (tmp_node2 != NULL)
     {
         if (tmp_node1 != NULL && strcmp(tmp_node1->name, "ExtDecList") == 0)
@@ -196,11 +194,9 @@ int ExtDef_s(struct AST_Node *cur_node)
             else
             {
                 FunDec_s(tmp_node1, 1, tmp_type, new_hashstack1);
-                 
                 struct AST_Node *CompSt_node = tmp_node2;
                 depth_++;
                 CompSt_s(CompSt_node, new_hashstack1, tmp_type);
-                
                 depth_--;
             }
             //assert(0);
@@ -220,9 +216,8 @@ int CompSt_s(struct AST_Node *cur_node, hash_stack cur_stack, Type cur_type)
     //printf("here.\n");
     //printf("%s\n",tmp_node1->name);
     if (strcmp(tmp_node1->name,"DefList")==0)
-    {
-                
-        DefList_s(tmp_node1, cur_stack);
+    {          
+        DefList_s(tmp_node1, cur_stack); 
         //printf("here.\n");
     //printf("here.\n");
         struct AST_Node *StmtList_node = AST_getChild(cur_node, 2);
@@ -341,10 +336,10 @@ int DefList_s(struct AST_Node *cur_node, hash_stack cur_stack)
 int Def_s(struct AST_Node *cur_node, hash_stack cur_stack)
 {
     //	Def -> Specifier DecList SEMI
-    
     Type Speci_type = Specifier_s(AST_getChild(cur_node, 0));
-    
+
     DecList_s(AST_getChild(cur_node, 1), cur_stack, Speci_type);
+
     //printf("here4753.\n");
     
     return 0;
@@ -354,9 +349,9 @@ int DecList_s(struct AST_Node *cur_node, hash_stack cur_stack, Type cur_type)
 {
     // 	DecList -> Dec
     // | Dec COMMA DecList
-    
+
     Dec_s(AST_getChild(cur_node, 0), cur_stack, cur_type);
-    
+
     if (AST_getChild(cur_node, 1) != NULL)
     {
         if (AST_getChild(cur_node, 2) != NULL)
@@ -1119,7 +1114,7 @@ FieldList VarDec_s(struct AST_Node *cur_node, Type cur_type)
             cnt++;
         }
         struct Type_ **type_list = (struct Type_ **)malloc(sizeof(struct Type_ **) * (cnt + 2));
-        strcpy(tmp_field->name, tmp_node0->is_string);
+        tmp_field->name=tmp_node0->is_string;
         tmp_node0 = AST_getChild(cur_node, 0);
         struct AST_Node *INT_node1 = NULL;
         Type temp_type1 = NULL;
