@@ -391,12 +391,12 @@ int Dec_s(struct AST_Node *cur_node, hash_stack cur_stack, Type cur_type)
     //printf("here5749.\n");
     //query_symbol_name
     Type tmp_typee = (Type)malloc(sizeof(struct Type_));
-    int tmp_isdefine;
-    int result= query_symbol_exist_mrk(&tmp_typee, VarDec_field->name, &tmp_isdefine, depth_,0);
+    int tmp_isdefine;//symbol_Find_mrk
+    int result= symbol_Find_mrk(&tmp_typee, VarDec_field->name, &tmp_isdefine, depth_,0);
     //int result = query_symbol_name(VarDec_field->name, depth_);
     Type Ty_res = (Type)malloc(sizeof(struct Type_));
     int empty_isdefine, new_kind;
-    int result1 = query_symbol_exist2(&Ty_res, VarDec_field->name, &empty_isdefine, depth_, &new_kind);
+    int result1 = symbol_Kind_find(&Ty_res, VarDec_field->name, &empty_isdefine, depth_, &new_kind);
 
     //printf("%s\n",AST_getChild(cur_node, 1)->name);
 
@@ -416,7 +416,7 @@ int Dec_s(struct AST_Node *cur_node, hash_stack cur_stack, Type cur_type)
     else // | VarDec ASSIGNOP Exp
     {
         //printf("%d\n",result);//assert(0);
-        int result1 = query_symbol_exist2(&Ty_res, VarDec_field->name, &empty_isdefine, depth_, &new_kind);
+        int result1 = symbol_Kind_find(&Ty_res, VarDec_field->name, &empty_isdefine, depth_, &new_kind);
         if (result == 0) //符号已存在，重复定义，报错3
             print_error(3, cur_node->lineno, VarDec_field->name);
         else
@@ -518,12 +518,12 @@ Type Exp_s(struct AST_Node *cur_node)
         if (strcmp(tmp_node0->name, "ID") == 0)
         {
             Type querytype0 = (Type)(malloc(sizeof(struct Type_)));
-            int queryifdef0;
-            int result_local = query_symbol_exist_mrk(&querytype0, tmp_node0->is_string, &queryifdef0, depth_,0);
+            int queryifdef0;//symbol_Find_mrk
+            int result_local = symbol_Find_mrk(&querytype0, tmp_node0->is_string, &queryifdef0, depth_,0);
             Type querytype1 = (Type)(malloc(sizeof(struct Type_)));
             int queryifdef1;
             int querykind;
-            int result_global = query_symbol_exist2(&querytype1, tmp_node0->is_string, &queryifdef1, depth_, &querykind);
+            int result_global = symbol_Kind_find(&querytype1, tmp_node0->is_string, &queryifdef1, depth_, &querykind);
             if (result_local == 0)
             { //找到局部定义
                 result = querytype0;
@@ -615,8 +615,8 @@ Type Exp_s(struct AST_Node *cur_node)
             
             char *funcname = tmp_node0->is_string;
             Type querytype = (Type)(malloc(sizeof(struct Type_)));
-            int queryifdef = -1;
-            int queryresult = query_symbol_exist_mrk(&querytype, funcname, &queryifdef, depth_,1); //在全局里面搜索;
+            int queryifdef = -1;//query_symbol_exist_mrk
+            int queryresult = symbol_Find_mrk(&querytype, funcname, &queryifdef, depth_,1); //在全局里面搜索;
             result = querytype->u.function.ret_para;
             if (queryresult == 0)
             {
@@ -627,7 +627,7 @@ Type Exp_s(struct AST_Node *cur_node)
                 }
             }
             if (queryresult == -1)
-            {
+            {//struct_Find
                 print_error(2, cur_node->lineno, funcname);
                 return NULL;
             }
@@ -699,7 +699,7 @@ Type Exp_s(struct AST_Node *cur_node)
                             strcpy(fieldname, idname);
                             strcat(fieldname, exptype->u.my_struct.name);
                             Type querytype = (Type)(malloc(sizeof(struct Type_)));
-                            int queryresult = query_struct(&querytype, fieldname);
+                            int queryresult = struct_Find(&querytype, fieldname);//query_struct
                             if (queryresult == 0)
                             {
                                 result = querytype;
@@ -895,8 +895,8 @@ FieldList VarList_s(struct AST_Node *cur_node, hash_stack cur_stack)
     //| ParamDec;
     FieldList result = ParamDec_s(AST_getChild(cur_node, 0));
     Type vartype_1 = (Type)(malloc(sizeof(struct Type_)));
-    int var_isdefine1;
-    int result_1 = query_symbol_exist_mrk(&vartype_1, result->name, &var_isdefine1, 0,0);
+    int var_isdefine1;//query_symbol_exist_mrk
+    int result_1 = symbol_Find_mrk(&vartype_1, result->name, &var_isdefine1, 0,0);
     if (result_1 == 0 && vartype_1 != NULL && vartype_1->kind == STRUCTURE) //变量与已定义结构体重复，报错3
         print_error(3, cur_node->lineno, result->name);
     ST_node newvar_node = new_STnode(VARIABLE, result->type, result->name, 1, depth_);
@@ -911,7 +911,7 @@ FieldList VarList_s(struct AST_Node *cur_node, hash_stack cur_stack)
         FieldList Para_field = ParamDec_s(AST_getChild(varlist_node, 0));
         Type vartype_follow = (Type)(malloc(sizeof(struct Type_)));
         int var_isdefine_follow;
-        int result1 = query_symbol_exist_mrk(&vartype_follow, Para_field->name, &var_isdefine_follow, 0,0);
+        int result1 = symbol_Find_mrk(&vartype_follow, Para_field->name, &var_isdefine_follow, 0,0);
         if (result1 == 0 && vartype_follow != NULL && vartype_follow->kind == STRUCTURE) //变量与已定义结构体重复，报错3
             print_error(3, cur_node->lineno, Para_field->name);
         newvar_node = new_STnode(VARIABLE, Para_field->type, Para_field->name, 1, depth_);
@@ -965,8 +965,8 @@ Type Specifier_s(struct AST_Node *cur_node)
             {
                 char *struct_name = tempnode2->is_string;
                 Type querytype = (Type)malloc(sizeof(struct Type_));
-                int queryifdef;
-                int result1 = query_symbol_exist_mrk(&querytype, struct_name, &queryifdef, depth_,1);
+                int queryifdef;//symbol_Find_mrk
+                int result1 = symbol_Find_mrk(&querytype, struct_name, &queryifdef, depth_,1);
                 if (result1 == 0)
                 { //结构体重复，报错16
                     print_error(16, tempnode2->lineno, struct_name);
@@ -1017,8 +1017,8 @@ Type Specifier_s(struct AST_Node *cur_node)
             struct AST_Node *ID_node = AST_getChild(tempnode1, 0);
             char *tempname = ID_node->is_string;
             Type temptype = NULL;
-            int tempdef;
-            int tempreuslt = query_symbol_exist_mrk(&temptype, tempname, &tempdef, depth_,1);
+            int tempdef;//query_symbol
+            int tempreuslt = symbol_Find_mrk(&temptype, tempname, &tempdef, depth_,1);
             if (tempreuslt != 0)
             { //结构体未定义，报错17
                 print_error(17, ID_node->lineno, tempname);
@@ -1094,7 +1094,7 @@ FieldList Def_struct(struct AST_Node *cur_node, char *struct_name)
         strcpy(Dec_name, Dec_field->name);
         strcat(Dec_name, struct_name);
         Type tmp_typee = (Type)malloc(sizeof(struct Type_));
-        if (query_struct(&tmp_typee, Dec_name) == 0) //域名重复定义 query_struct_name
+        if (struct_Find(&tmp_typee, Dec_name) == 0) //域名重复定义 query_struct_name
             print_error(15, Dec_node->lineno, Dec_field->name);
         else
             insert_struct(Dec_field->type, Dec_name);
@@ -1116,7 +1116,7 @@ FieldList Def_struct(struct AST_Node *cur_node, char *struct_name)
     strcpy(Dec_name, Dec_field->name);
     strcat(Dec_name, struct_name);
     Type nulltype = (Type)malloc(sizeof(struct Type_));
-    if (query_struct(&nulltype, Dec_name) == 0)
+    if (struct_Find(&nulltype, Dec_name) == 0)
         print_error(15, Dec_node->lineno, Dec_field->name);
     else
         insert_struct(Dec_field->type, Dec_name);
@@ -1215,8 +1215,8 @@ int ExtDecList(struct AST_Node *cur_node, Type cur_type)
     FieldList VarDec_field = VarDec_s(AST_getChild(cur_node, 0), cur_type);
     Type tmp_typee = (Type)malloc(sizeof(struct Type_));
     int tmp_isdefine;
-    //query_struct_name
-    if (query_symbol_exist_mrk(&tmp_typee, VarDec_field->name, &tmp_isdefine, depth_,0) == 0) //重复定义，报错3
+    //symbol_Find_mrk
+    if (symbol_Find_mrk(&tmp_typee, VarDec_field->name, &tmp_isdefine, depth_,0) == 0) //重复定义，报错3
         print_error(3, cur_node->lineno, VarDec_field->name);
     ST_node Insert_node = new_STnode(VARIABLE, VarDec_field->type, VarDec_field->name, 1, depth_);
     insert_symbol(Insert_node, Table);

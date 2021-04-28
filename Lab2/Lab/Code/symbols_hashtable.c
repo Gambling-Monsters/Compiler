@@ -414,25 +414,25 @@ unsigned int hash_pjw(char *name)
 }
 
 //加点东西
-int query_struct(Type *type, char *name)
+int struct_Find(Type *type, char *name)
 {
     int value = hash_pjw(name);
     if (struct_head[value].head == NULL)
         return -1;
     else
     {
-        ST_node temp = struct_head[value].head;
+        ST_node tmp_structList = struct_head[value].head;
         int flag = 0;
-        while (temp != NULL)
+        while (tmp_structList != NULL)
         {
-            if (strcmp(temp->name, name) == 0)
+            if (strcmp(tmp_structList->name, name) == 0)
             {
-                *type = temp->type;
+                *type = tmp_structList->type;
                 flag = 1;
                 return 0;
             }
-            temp = temp->hash_next;
-            if (temp == NULL)
+            tmp_structList = tmp_structList->hash_next;
+            if (tmp_structList == NULL)
                 break;
         }
         if (flag == 0)
@@ -440,36 +440,36 @@ int query_struct(Type *type, char *name)
     }
 }
 
-int query_symbol_exist_mrk(Type *type, char *name, int *ifdef, int depth, int mrk)
+int symbol_Find_mrk(Type *type, char *name, int *ifdef, int depth, int mrk)
 {
     int value = hash_pjw(name);
     if (global_head[value].head == NULL)
         return -1;
     else
     {
-        ST_node temp = global_head[value].head;
+        ST_node tmp_globalSymbol = global_head[value].head;
         int flag = 0;
-        while (temp != NULL)
+        while (tmp_globalSymbol != NULL)
         {
             if(mrk==1){
-                if (strcmp(temp->name, name) == 0 && depth >= temp->depth)
+                if (strcmp(tmp_globalSymbol->name, name) == 0 && depth >= tmp_globalSymbol->depth)
                 {
-                    *type = temp->type;
-                    *ifdef = temp->is_define;
+                    *type = tmp_globalSymbol->type;
+                    *ifdef = tmp_globalSymbol->is_define;
                     flag = 1;
                     return 0;
                 }
             }else if(mrk==0){
-                if (strcmp(temp->name, name) == 0 && depth == temp->depth)
+                if (strcmp(tmp_globalSymbol->name, name) == 0 && depth == tmp_globalSymbol->depth)
                 {
-                    *type = temp->type;
-                    *ifdef = temp->is_define;
+                    *type = tmp_globalSymbol->type;
+                    *ifdef = tmp_globalSymbol->is_define;
                     flag = 1;
                     return 0;
                 }
             }
-            temp = temp->hash_next;
-            if (temp == NULL)
+            tmp_globalSymbol = tmp_globalSymbol->hash_next;
+            if (tmp_globalSymbol == NULL)
                 break;
         }
         if (flag == 0)
@@ -477,27 +477,27 @@ int query_symbol_exist_mrk(Type *type, char *name, int *ifdef, int depth, int mr
     }
 }
 
-int query_symbol_exist2(Type *type, char *name, int *ifdef, int depth, int *kind)
-{ //存在 return 0,不存在return -1
+int symbol_Kind_find(Type *type, char *name, int *ifdef, int depth, int *kind)
+{
     int value = hash_pjw(name);
     if (global_head[value].head == NULL)
         return -1;
     else
     {
-        ST_node temp = global_head[value].head;
+        ST_node tmp_globalSym = global_head[value].head;
         int flag = 0;
-        while (temp != NULL)
+        while (tmp_globalSym != NULL)
         {
-            if (strcmp(temp->name, name) == 0 && depth >= temp->depth)
+            if (strcmp(tmp_globalSym->name, name) == 0 && depth >= tmp_globalSym->depth)
             {
-                *type = temp->type;
-                *ifdef = temp->is_define;
-                *kind = temp->kind;
+                *type = tmp_globalSym->type;
+                *ifdef = tmp_globalSym->is_define;
+                *kind = tmp_globalSym->kind;
                 flag = 1;
                 return 0;
             }
-            temp = temp->hash_next;
-            if (temp == NULL)
+            tmp_globalSym = tmp_globalSym->hash_next;
+            if (tmp_globalSym == NULL)
                 break;
         }
         if (flag == 0)
