@@ -8,6 +8,7 @@ ST_node new_STnode(int kind, Type type, char *name, int is_define, int depth)
     tmp_stnode->kind = kind;
     tmp_stnode->is_define = is_define;
     //printf("here.\n");
+    //strcpy(tmp_stnode->name,name);
     tmp_stnode->name=name;
     
     tmp_stnode->depth = depth;
@@ -145,13 +146,16 @@ int checkStart(struct AST_Node *cur_node)
 {
     depth_ = 0;
     Program_check(cur_node);
+    
 }
 
 int Program_check(struct AST_Node *cur_node)
 {
     //Program -> ExfDefList
     Table = ST_init();
+    
     ExtDefList_check(AST_getChild(cur_node, 0));
+    
     check_func();
     return 0;
 }
@@ -161,6 +165,7 @@ int ExtDefList_check(struct AST_Node *cur_node)
     //ExfDefList -> ExfDef ExfDefList
     //| (empty)
     ExtDef_s(AST_getChild(cur_node, 0));
+    
     if (AST_getChild(cur_node, 1) != NULL)
         ExtDefList_check(AST_getChild(cur_node, 1));
     return 0;
@@ -177,7 +182,7 @@ int ExtDef_s(struct AST_Node *cur_node)
     struct AST_Node *tmp_node2 = AST_getChild(cur_node, 2);
     if (AST_getChild(cur_node, 0) != NULL)
         tmp_type = Specifier_s(AST_getChild(cur_node, 0));
-
+   
     if (tmp_node2 != NULL)
     {
         if (tmp_node1 != NULL && strcmp(tmp_node1->name, "ExtDecList") == 0)
@@ -191,12 +196,16 @@ int ExtDef_s(struct AST_Node *cur_node)
             else
             {
                 FunDec_s(tmp_node1, 1, tmp_type, new_hashstack1);
+                 
                 struct AST_Node *CompSt_node = tmp_node2;
                 depth_++;
                 CompSt_s(CompSt_node, new_hashstack1, tmp_type);
+                
                 depth_--;
             }
+            //assert(0);
             exit_domain();
+            //assert(0);
         }
     }
     return 0;
@@ -218,7 +227,7 @@ int CompSt_s(struct AST_Node *cur_node, hash_stack cur_stack, Type cur_type)
     //printf("here.\n");
         struct AST_Node *StmtList_node = AST_getChild(cur_node, 2);
         
-        if (StmtList_node->name=="StmtList")
+        if (strcmp(StmtList_node->name,"StmtList")==0)
             StmtList_s(StmtList_node, cur_stack, cur_type);
         
     }
@@ -1098,7 +1107,7 @@ FieldList VarDec_s(struct AST_Node *cur_node, Type cur_type)
         tmp_field->type = cur_type;
         //printf("here73149.\n");
         tmp_field->name=tmp_node0->is_string;
-        
+        //strcpy(tmp_field->name, tmp_node0->is_string);
         return tmp_field;
     }
     else
