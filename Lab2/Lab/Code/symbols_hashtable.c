@@ -171,6 +171,8 @@ void exit_domain()
 void add_func(char *name, int func_lineno)
 //push_function_dec(char*name,int column)
 {
+    //printf("here.\n");
+    //printf("here.\n");
     func_list cur = func_head;
     if (cur == NULL)
         cur = (func_list)malloc(sizeof(struct func_list_));
@@ -181,6 +183,7 @@ void add_func(char *name, int func_lineno)
         cur->next = (func_list)malloc(sizeof(struct func_list_));
         cur = cur->next;
     }
+    
     strcpy(cur->name, name);
     cur->fun_lineno = func_lineno;
     cur->next = NULL;

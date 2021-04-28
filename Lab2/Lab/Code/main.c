@@ -28,6 +28,7 @@ int main(int argc, char **argv)
     {
         if (synErr == 0)
         {
+            //func(root,0);
             checkStart(root);
         }
     }
