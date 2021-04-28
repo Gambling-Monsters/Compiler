@@ -29,13 +29,9 @@ ST_node find_struct(char *name);
 int type_eq(Type A, Type B);
 int strong_array_check(Type A, Type B);
 unsigned int hash_pjw(char *name);
-//int query_struct_name(char *name);
 int struct_Find(Type *type, char *name);
 int symbol_Find_mrk(Type *type, char *name, int *ifdef, int depth, int mrk);
-//int query_symbol_exist(Type *type, char *name, int *ifdef, int depth);
 int symbol_Kind_find(Type *type, char *name, int *ifdef, int depth, int *kind);
-//int query_symbol_name(char *name, int depth);
-//int query_symbol(Type *type, char *name, int *ifdef, int depth);
 struct FieldList_
 {
     char *name;     //域的名字;

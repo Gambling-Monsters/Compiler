@@ -35,26 +35,27 @@ struct AST_Node{
 };
 extern void func(struct AST_Node* s_node,int h);
 #endif
-int checkStart(struct AST_Node *cur);
-int Program_check(struct AST_Node *cur);
-int ExtDefList_check(struct AST_Node *cur);
-int ExtDef_s(struct AST_Node*cur);
-int CompSt_s(struct AST_Node*cur,hash_stack scope,Type res_type);
-int StmtList_s(struct AST_Node*cur,hash_stack scope,Type res_type);
-int Stmt_s(struct AST_Node*cur,hash_stack scope,Type res_type);
-int DefList_s(struct AST_Node*cur,hash_stack scope);
-int Def_s(struct AST_Node*cur,hash_stack scope);
-int DecList_s(struct AST_Node*cur,hash_stack scope,Type type);
-int Dec_s(struct AST_Node*cur,hash_stack scope,Type type);
-Type Exp_s(struct AST_Node*cur);
-int Arg_s(struct AST_Node*cur,FieldList params);
-int FunDec_s(struct AST_Node*cur,const int ifdef,const Type res_type,hash_stack scope);
-FieldList VarList_s(struct AST_Node* cur,hash_stack scope);
-FieldList ParamDec_s(struct AST_Node*cur);
-Type Specifier_s(struct AST_Node*cur);
-FieldList Def_struct(struct AST_Node*cur,char* struct_name);
-FieldList Dec_struct(struct AST_Node*cur,Type type);
-FieldList VarDec_s(struct AST_Node*cur,Type type);
-int ExtDecList(struct AST_Node *cur,Type type);
 void print_error(int err_type, int err_col, char *message);
+int checkStart(struct AST_Node *cur_node);
+int Program_check(struct AST_Node *cur_node);
+int ExtDefList_check(struct AST_Node *cur_node);
+int ExtDef_check(struct AST_Node *cur_node);
+int CompSt_check(struct AST_Node *cur_node, hash_stack cur_stack, Type cur_type);
+int StmtList_check(struct AST_Node *cur_node, hash_stack cur_stack, Type cur_type);
+int Stmt_check(struct AST_Node *cur_node, hash_stack cur_stack, Type cur_type);
+int DefList_check(struct AST_Node *cur_node, hash_stack cur_stack);
+int Def_check(struct AST_Node *cur_node, hash_stack cur_stack);
+int DecList_check(struct AST_Node *cur_node, hash_stack cur_stack, Type cur_type);
+int Dec_check(struct AST_Node *cur_node, hash_stack cur_stack, Type cur_type);
+Type Exp_check(struct AST_Node *cur_node);
+int Arg_check(struct AST_Node *cur_node, FieldList paras);
+int FunDec_check(struct AST_Node *cur_node, const int is_define, const Type cur_type, hash_stack cur_stack);
+FieldList VarList_check(struct AST_Node *cur_node, hash_stack cur_stack);
+FieldList ParamDec_check(struct AST_Node *cur_node);
+Type Specifier_check(struct AST_Node *cur_node);
+FieldList Def_struct_check(struct AST_Node *cur_node, char *struct_name);
+FieldList Dec_struct_check(struct AST_Node *cur_node, Type cur_type);
+FieldList VarDec_check(struct AST_Node *cur_node, Type cur_type);
+int ExtDecList_check(struct AST_Node *cur_node, Type cur_type);
+
 #endif
