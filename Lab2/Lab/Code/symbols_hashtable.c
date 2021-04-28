@@ -170,11 +170,12 @@ void exit_domain()
 void add_func(char *name, int func_lineno)
 //push_function_dec(char*name,int column)
 {
-    //printf("here.\n");check_function_def
-    //printf("here.\n");
     func_list cur = func_head;
     if (cur == NULL)
+    {
         cur = (func_list)malloc(sizeof(struct func_list_));
+        func_head = cur;
+    }
     else
     {
         while (cur->next != NULL)
@@ -183,25 +184,22 @@ void add_func(char *name, int func_lineno)
         cur = cur->next;
     }
 
-    //strcpy(cur->name, name);
     cur->name = name;
     cur->fun_lineno = func_lineno;
 
     cur->next = NULL;
+    return;
 }
 
 //完成后对于函数进行检查
 void check_func()
 //check_function_def()
 {
-    //printf("qeiue\n");
     func_list cur = func_head;
-    //printf("%\n",cur->fun_lineno);
     while (cur != NULL)
     {
         char *name = cur->name;
         ST_node ret_func = find_symbol(name, 0);
-        printf("%d\n", ret_func->is_define);
         if (ret_func->is_define != 1)
         {
             printf("Error type %d at Line %d: Undefined function \"%s\".\n", 18, cur->fun_lineno, cur->name);
@@ -323,7 +321,7 @@ int type_eq(Type A, Type B)
                 FieldList B_field = B->u.my_struct.structure;
                 while (A_field != NULL && B_field != NULL)
                 {
-                    if (A_field->type != B_field->type)
+                    if (A_field->type->kind != B_field->type->kind)
                         return 0;
                     else
                     {
@@ -451,7 +449,8 @@ int query_symbol_exist_mrk(Type *type, char *name, int *ifdef, int depth, int mr
         int flag = 0;
         while (temp != NULL)
         {
-            if(mrk==1){
+            if (mrk == 1)
+            {
                 if (strcmp(temp->name, name) == 0 && depth >= temp->depth)
                 {
                     *type = temp->type;
@@ -459,7 +458,9 @@ int query_symbol_exist_mrk(Type *type, char *name, int *ifdef, int depth, int mr
                     flag = 1;
                     return 0;
                 }
-            }else if(mrk==0){
+            }
+            else if (mrk == 0)
+            {
                 if (strcmp(temp->name, name) == 0 && depth == temp->depth)
                 {
                     *type = temp->type;
@@ -504,4 +505,3 @@ int query_symbol_exist2(Type *type, char *name, int *ifdef, int depth, int *kind
             return -1;
     }
 }
-

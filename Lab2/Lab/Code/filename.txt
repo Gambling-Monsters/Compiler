@@ -9,6 +9,7 @@ test11.cmm
 Error type 11 at Line 4: "i" is not a function.
 
 test12.cmm
+Error type 12 at Line 4: This is not an integer.
 
 test13.cmm
 Error type 13 at Line 9: Illegal use of ".".
@@ -26,10 +27,10 @@ test17.cmm
 Error type 17 at Line 3: Undefined structure "Position".
 
 test18.cmm
-Error type B at Line 1: syntax error near ;.
 
 test19.cmm
-Error type B at Line 6: syntax error near ;.
+Error type 19 at Line 8: Inconsistent declaration of function "func".
+Error type 18 at Line 6: Undefined function "func".
 
 test2.cmm
 Error type 2 at Line 4: Undefined function "inc".
@@ -40,7 +41,6 @@ test21.cmm
 Error type 3 at Line 10: Redefined variable "i".
 
 test22.cmm
-Error type 5 at Line 17: Type mismatched for assignment.
 
 test23.cmm
 Error type 5 at Line 16: Type mismatched for assignment.
@@ -64,3 +64,4 @@ test8.cmm
 Error type 8 at Line 4: Type mismatched for return.
 
 test9.cmm
+Error type 9 at Line 8: Function is not applicable for arguments.
