@@ -1,5 +1,4 @@
 #include "sem.h"
-int debug_cnt = 0;
 //创建
 ST_node new_STnode(int kind, Type type, char *name, int is_define, int depth)
 {
@@ -194,6 +193,7 @@ int ExtDef_check(struct AST_Node *cur_node)
             struct AST_Node *FunDec_node = tmp_node1;
             if (strcmp(tmp_node2->name, "SEMI") == 0)
             {
+
                 hash_stack new_hashstack1 = enter_domain();
 
                 FunDec_check(FunDec_node, 0, tmp_type, new_hashstack1);

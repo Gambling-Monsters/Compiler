@@ -30,6 +30,7 @@ ST_node init_symbol(Type type, char *name, int is_define, int depth)
 
 //插入节点
 void insert_symbol(ST_node my_node, hash_stack domain)
+//insert_symbol2(struct Symbol_node*p,struct Symbol_bucket* scope)
 {
     int idx = hash_pjw(my_node->name);
 
@@ -64,11 +65,9 @@ ST_node find_symbol(char *name, int depth)
     ST_node cur = global_head[idx].head;
     ST_node ret_node = NULL;
     //遍历哈希值为该值的链表，若hash不到则直接返回NULL。
-    printf("%s\n", name);
     while (cur)
     {
         //目前的深度应该深于查找节点的深度, 我们只需选择最深的那一个
-        printf(" %s\n", cur->name);
         if (strcmp(cur->name, name) == 0 && depth >= cur->depth)
             ret_node = cur;
         cur = cur->hash_next;
@@ -113,11 +112,13 @@ void delete_node(char *name, int depth, hash_stack domain)
 
     while (HT_iter->hash_next != node_del)
         HT_iter = HT_iter->hash_next;
+
     //将链表头设为哑节点的下一个节点。
     HT_iter->hash_next = node_del->hash_next;
     domain_iter->ctrl_next = node_del->ctrl_next;
     global_head[idx].head = HT_iter->hash_next;
     domain->head = domain_iter->ctrl_next;
+
     //free_node(node_del);
 
     return;
