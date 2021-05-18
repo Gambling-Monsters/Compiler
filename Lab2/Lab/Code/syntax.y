@@ -30,6 +30,7 @@ void bison_insert(struct AST_Node *top_node,int num_args,...){
     }
 }
 //打印树
+
 void func(struct AST_Node* s_node,int h){
     if(s_node==NULL) return;
     for(int i=1;i<=h;i++) printf("  ");
@@ -59,6 +60,7 @@ void func(struct AST_Node* s_node,int h){
     func(s_node->child,h+1);
     func(s_node->next_sib,h);
 }
+
 
 int yyerror(char*msg){
     synErr+=1;
@@ -140,6 +142,11 @@ ExtDef:Specifier ExtDecList SEMI{
         bison_insert($$,2,$1,$2); 
     };
     | Specifier FunDec CompSt{
+        int locline=@$.first_line;
+        $$=bison_init("ExtDef",locline);
+        bison_insert($$,3,$1,$2,$3); 
+    };
+     | Specifier FunDec SEMI{
         int locline=@$.first_line;
         $$=bison_init("ExtDef",locline);
         bison_insert($$,3,$1,$2,$3); 
@@ -553,22 +560,3 @@ Args:Exp COMMA Args{
     };
 
 %%
-
-int main(int argc, char** argv){
-	if(argc <= 1)
-			return 1;
-	FILE *f = fopen(argv[1], "r");
-	if(!f){
-		perror(argv[1]);
-		return 1;
-	}
-    yylineno=1;
-	yyrestart(f);
-	yyparse();
-	if(!lexError){
-        if(!synErr){
-            func(root,0);
-        }
-	}
-	return 0;
-}
