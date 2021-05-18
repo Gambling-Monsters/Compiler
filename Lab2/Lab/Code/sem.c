@@ -1,4 +1,5 @@
 #include "sem.h"
+int debug_cnt = 0;
 //创建
 ST_node new_STnode(int kind, Type type, char *name, int is_define, int depth)
 {
@@ -164,8 +165,8 @@ int ExtDefList_check(struct AST_Node *cur_node)
 {
     //ExfDefList -> ExfDef ExfDefList
     //| (empty)
-    
     ExtDef_s(AST_getChild(cur_node, 0));
+    debug_cnt ++;
 
     if (AST_getChild(cur_node, 1) != NULL)
         ExtDefList_check(AST_getChild(cur_node, 1));
@@ -196,7 +197,6 @@ int ExtDef_s(struct AST_Node *cur_node)
             struct AST_Node *FunDec_node = tmp_node1;
             if (strcmp(tmp_node2->name, "SEMI") == 0)
             {
-                
                 hash_stack new_hashstack1 = enter_domain();
                 
                 FunDec_s(FunDec_node, 0, tmp_type, new_hashstack1);
@@ -208,11 +208,9 @@ int ExtDef_s(struct AST_Node *cur_node)
             {
                 hash_stack new_hashstack1 = enter_domain();
                 FunDec_s(FunDec_node, 1, tmp_type, new_hashstack1);
-
                 struct AST_Node *CompSt_node = tmp_node2;
                 depth_++;
                 CompSt_s(CompSt_node, new_hashstack1, tmp_type);
-
                 depth_--;
                 exit_domain();
             }
