@@ -207,16 +207,11 @@ int ExtDef_check(struct AST_Node *cur_node)
                 depth_++;
                 struct AST_Node *CompSt_node = tmp_node2;
                 CompSt_check(CompSt_node, new_hashstack1, tmp_type);
-                //assert(0);
                 depth_--;
                 exit_domain();
             }
-            //assert(0);
-            //exit_domain();
-            //assert(0);
         }
     }
-    //printf("mark\n");
     return 0;
 }
 
