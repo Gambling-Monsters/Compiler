@@ -39,7 +39,7 @@ int main(int argc, char **argv)
         if (synErr == 0)
         {
             checkStart(root);
-            intermediate_generate(root,file_2);
+            init_gen(root,file_2);
         }
     }
     return 0;

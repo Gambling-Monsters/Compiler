@@ -412,16 +412,16 @@ int typeSize(Type cur)
 }
 
 //生成部分
-int init_gen(struct AST_Node *cur, FILE *fp)
+int init_gen(struct AST_Node* cur, FILE *fp)
 {
     success = 1;
     varCount = 0, tmpCount = 0, labelCount = 0;
-    head_code = (struct InterCode *)malloc(sizeof(struct InterCode));
+    head_code = (InterCode_L)malloc(sizeof(struct InterCode_Link));
     head_code->next = NULL;
     head_code->prev = NULL;
     tail_code = head_code;
 
-    program_gen(cur);
+    Program_gen(cur);
 
     printIntercode(fp);
 }
@@ -434,7 +434,7 @@ void Program_gen(struct AST_Node *cur)
     return;
 }
 
-int ExtDefList_gen(struct Node *cur)
+int ExtDefList_gen(struct AST_Node *cur)
 {
 
     struct AST_Node *ExtDef_node = AST_getChild(cur, 0);
@@ -444,7 +444,7 @@ int ExtDefList_gen(struct Node *cur)
     {
         int res = ExtDef_gen(ExtDef_node);
         success = res;
-        struct Node *ExtDefList_node = AST_getChild(cur, 1);
+        struct AST_Node *ExtDefList_node = AST_getChild(cur, 1);
         if (ExtDefList_node != NULL)
         {
             res = ExtDefList_gen(ExtDefList_node);
@@ -522,7 +522,7 @@ int CompSt_gen(struct AST_Node *cur)
     struct AST_Node *temp = AST_getChild(cur, 1);
     if (strcmp(temp->name, "DefList") == 0)
     {
-        DefList_g(temp);
+        DefList_gen(temp);
         struct AST_Node *SL_node = AST_getChild(cur, 2);
         if (strcmp(SL_node->name, "StmtList") == 0)
         {
@@ -662,12 +662,12 @@ int Dec_gen(struct AST_Node *cur)
     struct AST_Node *VD_node = AST_getChild(cur, 0);
     if (AST_getChild(cur, 1) == NULL)
     {
-        VarDec_g(VD_node);
+        VarDec_gen(VD_node);
     }
     else
     {
         Operand op1 = VarDec_gen(VD_node);
-        Operand op2 = Exp_g(AST_getChild(cur, 2));
+        Operand op2 = Exp_gen(AST_getChild(cur, 2));
         newIntercode(ASSIGN_INTERCODE, op1, op2);
     }
 
@@ -719,7 +719,7 @@ Operand VarDec_gen(struct AST_Node *cur)
     return result;
 }
 
-int getarraydepth(struct AST_Node *arr_node)
+int getarraydepth(ST_node arr_node)
 {
     int cnt = 0;
     Type temp = arr_node->type;
@@ -735,9 +735,9 @@ int getarraydepth(struct AST_Node *arr_node)
 int Arg_gen(struct AST_Node *cur, FieldList para)
 {
     if (cur == NULL || para == NULL)
-        return;
+        return 0;
 
-    Operand temp_op = Exp_g(AST_getChild(cur, 0)); //使用局部变量防止修改原来的值;
+    Operand temp_op = Exp_gen(AST_getChild(cur, 0)); //使用局部变量防止修改原来的值;
     Operand op = copyOP(temp_op);
 
     if (para->type->kind == STRUCTURE || para->type->kind == ARRAY)
@@ -883,7 +883,7 @@ Operand Exp_gen(struct AST_Node *cur){
 				(strcmp(my_node2->name,"STAR")==0)||
 				(strcmp(my_node2->name,"DIV")==0)
 			){
-				int in_kind=arithmetic_kind(my_node2->name);
+				int in_kind=arithKind(my_node2->name);
 				ret_op=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
 				struct AST_Node*exp_node1=my_node1;
 				struct AST_Node*exp_node2=AST_getChild(cur,2);
@@ -1059,7 +1059,7 @@ Operand Exp_gen(struct AST_Node *cur){
 	return ret_op;
 }
 
-int Cond_g(struct Node* cur,Operand label_true,Operand label_false){
+int Cond_gen(struct AST_Node* cur,Operand label_true,Operand label_false){
 	Operand zero=createOP(CONSTANT_OPERAND,VAR_OPERAND,0);
 
 	if(cur!=NULL)
@@ -1146,7 +1146,7 @@ int Cond_g(struct Node* cur,Operand label_true,Operand label_false){
 					newIntercode(IFGOTO_INTERCODE,result,"==",zero,label_false);
 				}
 			}else if(strcmp(my_node2->name,"LB")==0){
-				Operand op=Exp_g(cur);
+				Operand op=Exp_gen(cur);
 				if(label_true!=NULL&&label_false!=NULL){
 					newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
 					newIntercode(GOTO_INTERCODE,label_false);
@@ -1157,7 +1157,7 @@ int Cond_g(struct Node* cur,Operand label_true,Operand label_false){
 				}
 
 			}else if(strcmp(my_node2->name,"DOT")==0){
-				Operand op=Exp_g(cur);
+				Operand op=Exp_gen(cur);
 				if(label_true!=NULL&&label_false!=NULL){
 					newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
 					newIntercode(GOTO_INTERCODE,label_false);
@@ -1169,10 +1169,10 @@ int Cond_g(struct Node* cur,Operand label_true,Operand label_false){
 			}
 
 		}else if(strcmp(my_node1->name,"NOT")==0){
-			struct Node*expnode=getchild(cur,1);
-			Cond_g(expnode,label_false,label_true);
+			struct AST_Node* expnode=AST_getChild(cur,1);
+			Cond_gen(expnode,label_false,label_true);
 		}else if(strcmp(my_node1->name,"MINUS")==0){
-			Operand op=Exp_g(cur);
+			Operand op=Exp_gen(cur);
 			if(label_true!=NULL&&label_false!=NULL){
 				newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
 				newIntercode(GOTO_INTERCODE,label_false);
@@ -1182,10 +1182,10 @@ int Cond_g(struct Node* cur,Operand label_true,Operand label_false){
 				newIntercode(IFGOTO_INTERCODE,op,"==",zero,label_false);
 			}
 		}else if(strcmp(my_node1->name,"LP")==0){
-			struct Node*expnode=getchild(cur,1);
-			Cond_g(expnode,label_true,label_false);
+			struct AST_Node* expnode=AST_getChild(cur,1);
+			Cond_gen(expnode,label_true,label_false);
 		}else if(strcmp(my_node1->name,"ID")==0){
-			Operand op=Exp_g(cur);
+			Operand op=Exp_gen(cur);
 			if(label_true!=NULL&&label_false!=NULL){
 				newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
 				newIntercode(GOTO_INTERCODE,label_false);

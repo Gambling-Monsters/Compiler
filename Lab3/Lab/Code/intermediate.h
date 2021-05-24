@@ -60,3 +60,21 @@ struct InterCode_Link{//双向链表
 	InterCode_L prev;
 	InterCode_L next;
 };
+
+int init_gen(struct AST_Node *cur, FILE *fp);
+void Program_gen(struct AST_Node *cur);
+int ExtDefList_gen(struct AST_Node *cur);
+int ExtDef_gen(struct AST_Node *cur);
+int FunDec_gen(struct AST_Node *cur);
+int CompSt_gen(struct AST_Node *cur);
+int DefList_gen(struct AST_Node *cur);
+int StmtList_gen(struct AST_Node *cur);
+int Stmt_gen(struct AST_Node *cur);
+int Def_gen(struct AST_Node *cur);
+int DecList_gen(struct AST_Node *cur);
+int Dec_gen(struct AST_Node *cur);
+Operand VarDec_gen(struct AST_Node *cur);
+int getarraydepth(ST_node arr_node);
+int Arg_gen(struct AST_Node *cur, FieldList para);
+Operand Exp_gen(struct AST_Node *cur);
+int Cond_gen(struct AST_Node* cur,Operand label_true,Operand label_false);
