@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include "symbols_hashtable.h"
+#include "sem.h"
 
 //操作数
 typedef struct Operand_* Operand;

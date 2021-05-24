@@ -92,6 +92,7 @@ struct ST_node_
     ST_node hash_next;
     //控制域链表
     ST_node ctrl_next;
+    
     //lab3
     int var_no;
 	int ifaddress;//记录是否是地址;
