@@ -422,7 +422,6 @@ int init_gen(struct AST_Node* cur, FILE *fp)
     tail_code = head_code;
 
     Program_gen(cur);
-
     printIntercode(fp);
 }
 
@@ -430,7 +429,6 @@ void Program_gen(struct AST_Node *cur)
 {
     int result = ExtDefList_gen(AST_getChild(cur, 0));
     assert(result != 0);
-
     return;
 }
 
@@ -463,7 +461,7 @@ int ExtDef_gen(struct AST_Node *cur)
     if (strcmp(FD_node->name, "FunDec") == 0)
     {
         struct AST_Node *CS_node = AST_getChild(cur, 2);
-        if (strcmp(CS_node->name, "CompSt"))
+        if (strcmp(CS_node->name, "CompSt")==0)
         {
             success &= FunDec_gen(FD_node);
             success &= CompSt_gen(CS_node);
