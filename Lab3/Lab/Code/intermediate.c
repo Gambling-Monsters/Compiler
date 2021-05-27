@@ -701,7 +701,7 @@ Operand VarDec_gen(struct AST_Node *cur)
     {
 
         struct AST_Node *find_node = AST_getChild(ID_node, 0);
-        while (strcmp(find_node->name, "ID"))
+        while (strcmp(find_node->name, "ID")==0)
             find_node = find_node->child;
 
         ST_node my_id = find_symbol(find_node->is_string, __INT_MAX__);
@@ -998,7 +998,7 @@ Operand Exp_gen(struct AST_Node *cur){
 			}
 			
 		}
-		else if(strcmp(my_node2->name,"LB")){
+		else if(strcmp(my_node2->name,"LB")==0){
 			Operand expop1=copyOP(Exp_gen(my_node1));
 			int depth=expop1->depth;
 
