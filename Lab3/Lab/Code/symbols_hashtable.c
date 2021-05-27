@@ -6,7 +6,7 @@ struct hash_stack_ global_head[SYMBOL_LEN] = {NULL};
 struct hash_stack_ struct_head[SYMBOL_LEN] = {NULL};
 hash_stack domain_head = NULL;
 func_list func_head = NULL;
-
+extern hash_stack Table;
 //初始符号表
 hash_stack ST_init()
 //init_symboltable()
@@ -128,6 +128,7 @@ void delete_node(char *name, int depth, hash_stack domain)
 hash_stack enter_domain()
 //enter_scope()
 {
+    return domain_head;
     hash_stack ret = malloc(sizeof(struct hash_stack_));
     ret->next = NULL;
     ret->head = NULL;
@@ -142,6 +143,7 @@ hash_stack enter_domain()
 void exit_domain()
 //exit_scope()
 {
+    return domain_head;
     hash_stack domain_iter = domain_head;
     hash_stack domain_del = domain_iter;
     while (domain_del->next != NULL)
