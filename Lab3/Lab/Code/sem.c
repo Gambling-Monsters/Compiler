@@ -193,7 +193,7 @@ void create_read(){
 	int ifdef=1;
 	int depthfake=0;
 	ST_node insert_node=new_STnode(FUNCTION_NAME,functiontype,funcname,ifdef,depthfake);
-	insert_symbol2(insert_node,Table);
+	insert_symbol(insert_node,Table);
 
 }
 
@@ -201,7 +201,7 @@ int Program_check(struct AST_Node *cur_node)
 {
     //Program -> ExfDefList
     Table = ST_init();
-    struct Ast_Node *tmp_node0=AST_getChild(cur_node,0);
+    struct AST_Node *tmp_node0=AST_getChild(cur_node,0);
     create_write();
 	create_read();
     ExtDefList_check(tmp_node0);
@@ -214,9 +214,9 @@ int ExtDefList_check(struct AST_Node *cur_node)
     //ExfDefList -> ExfDef ExfDefList
     //| (empty)
     if(cur_node==NULL)return 0;
-    struct Ast_Node *tmp_node0=AST_getChild(cur_node,0);
+    struct AST_Node *tmp_node0=AST_getChild(cur_node,0);
     if(tmp_node0==NULL)return 0;
-    struct Ast_Node *tmp_node1=AST_getChild(cur_node,1);
+    struct AST_Node *tmp_node1=AST_getChild(cur_node,1);
     ExtDef_check(tmp_node0);
 
     if (tmp_node1 != NULL)
@@ -1026,7 +1026,7 @@ Type Specifier_check(struct AST_Node *cur_node)
                             if (tmp_defnode0 == NULL)
                                 break;
                             int tmp_offset=0;
-                            FieldList tmp_defplus = Def_struct_check(tmp_defnode0, name_ofStruct);
+                            FieldList tmp_defplus = Def_struct_check(tmp_defnode0, name_ofStruct, );
                             cur_offset+=tmp_offset;
                             if (result == NULL)
                             {
