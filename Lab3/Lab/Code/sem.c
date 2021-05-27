@@ -7,15 +7,12 @@ ST_node new_STnode(int kind, Type type, char *name, int is_define, int depth)
 
     tmp_stnode->kind = kind;
     tmp_stnode->is_define = is_define;
-    //printf("here.\n");
-    //strcpy(tmp_stnode->name,name);
     tmp_stnode->name = name;
 
     tmp_stnode->depth = depth;
     tmp_stnode->type = type;
     tmp_stnode->hash_next = NULL;
     tmp_stnode->ctrl_next = NULL;
-    //printf("here.\n");
     tmp_stnode->var_no=-1;
     return tmp_stnode;
 }
@@ -1026,7 +1023,7 @@ Type Specifier_check(struct AST_Node *cur_node)
                             if (tmp_defnode0 == NULL)
                                 break;
                             int tmp_offset=0;
-                            FieldList tmp_defplus = Def_struct_check(tmp_defnode0, name_ofStruct, );
+                            FieldList tmp_defplus = Def_struct_check(tmp_defnode0, name_ofStruct);
                             cur_offset+=tmp_offset;
                             if (result == NULL)
                             {

@@ -24,7 +24,7 @@ hash_stack enter_domain();
 void exit_domain();
 void add_func(char *name, int func_lineno);
 void check_func();
-int insert_struct(Type type, char *name);
+int insert_struct(Type type,char*name,int offset,char*belongtosturctname);
 ST_node find_struct(char *name);
 int type_eq(Type A, Type B);
 int strong_array_check(Type A, Type B);

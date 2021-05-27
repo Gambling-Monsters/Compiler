@@ -25,6 +25,7 @@ ST_node init_symbol(Type type, char *name, int is_define, int depth)
     strcpy(my_node->name, name);
     my_node->depth = depth;
     my_node->is_define = is_define;
+    my_node->var_no = -1;
     return my_node;
 }
 
@@ -32,6 +33,7 @@ ST_node init_symbol(Type type, char *name, int is_define, int depth)
 void insert_symbol(ST_node my_node, hash_stack domain)
 //insert_symbol2(struct Symbol_node*p,struct Symbol_bucket* scope)
 {
+    my_node->var_no = -1;
     int idx = hash_pjw(my_node->name);
 
     if (domain == NULL || my_node->hash_next != NULL || my_node->ctrl_next != NULL)
@@ -212,13 +214,20 @@ void check_func()
 }
 
 //向结构体符号表中插入符号，0为正常，1为结构体重定义。
-int insert_struct(Type type, char *name)
+int insert_struct(Type type,char*name,int offset,char*belongtosturctname)
 //insert_struct(Type type,char*name)
 {
+    ST_node insert_node = init_symbol(type,name,1,0);
+    insert_node->kind = VARIABLE;
+    insert_node->offset = offset;
+    insert_node->belongtostructname = belongtosturctname;
+    insert_symbol(insert_node, global_head);
     int idx = hash_pjw(name);
     if (struct_head[idx].head == NULL)
     {
         ST_node cur = malloc(sizeof(struct ST_node_));
+        cur->offset = offset;
+        cur->belongtostructname = belongtosturctname;
         cur->type = type;
         cur->name = name;
         cur->hash_next = NULL;
@@ -240,9 +249,14 @@ int insert_struct(Type type, char *name)
         }
         //插入
         ST_node cur = malloc(sizeof(struct ST_node_));
+        cur->offset = offset;
+        cur->belongtostructname = belongtosturctname;
         cur->type = type;
         cur->hash_next = list_head;
         strcpy(cur->name, name);
+        char*structsymbol_name=(char*)malloc(strlen(name)+1);
+		strcpy(structsymbol_name,name);
+		cur->belongtostructname=structsymbol_name;//垃圾copy paste错误
         struct_head[idx].head = cur;
     }
     return 0;
