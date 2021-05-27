@@ -32,6 +32,7 @@ struct AST_Node *AST_getChild(struct AST_Node *cur_node, int depth)
 //type_eq
 void print_error(int err_type, int err_col, char *message)
 {
+    return;
     printf("Error type %d at Line %d: ", err_type, err_col);
     switch (err_type)
     {
