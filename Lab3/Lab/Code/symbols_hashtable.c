@@ -143,7 +143,7 @@ hash_stack enter_domain()
 void exit_domain()
 //exit_scope()
 {
-    return domain_head;
+    return;
     hash_stack domain_iter = domain_head;
     hash_stack domain_del = domain_iter;
     while (domain_del->next != NULL)
