@@ -1023,7 +1023,7 @@ Type Specifier_check(struct AST_Node *cur_node)
                             if (tmp_defnode0 == NULL)
                                 break;
                             int tmp_offset=0;
-                            FieldList tmp_defplus = Def_struct_check(tmp_defnode0, name_ofStruct);
+                            FieldList tmp_defplus = Def_struct_check(tmp_defnode0, name_ofStruct,cur_offset, &tmp_offset);
                             cur_offset+=tmp_offset;
                             if (result == NULL)
                             {
@@ -1093,7 +1093,7 @@ Type Specifier_check(struct AST_Node *cur_node)
                     if (tmp_defnode0 == NULL)
                         break;
                     int tmp_offset=0;
-                    FieldList tmp_defplus = Def_struct_check(tmp_defnode0, name_ofStruct);
+                    FieldList tmp_defplus = Def_struct_check(tmp_defnode0, name_ofStruct,cur_offset, &tmp_offset);
                     cur_offset+=tmp_offset;
                     if (result == NULL)
                     {

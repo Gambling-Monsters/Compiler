@@ -213,6 +213,21 @@ void check_func()
     return;
 }
 
+ST_node create_symbolnode2(int kind,Type type,char*name,int is_define,int depth)
+{
+	ST_node insert_node=(ST_node)malloc(sizeof(struct ST_node_));
+	insert_node->hash_next=NULL;
+	insert_node->ctrl_next=NULL;
+	insert_node->kind=kind;
+	insert_node->type=type;
+	insert_node->name=name;
+	insert_node->depth=depth;
+	insert_node->is_define=is_define;
+	insert_node->var_no=-1;
+	return insert_node;
+;
+}
+
 //向结构体符号表中插入符号，0为正常，1为结构体重定义。
 int insert_struct(Type type,char*name,int offset,char*belongtosturctname)
 //insert_struct(Type type,char*name)
