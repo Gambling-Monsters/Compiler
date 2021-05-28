@@ -1,0 +1,15 @@
+int main(){
+    int x, y, z;
+    int a, b, c;
+    int t = 3;
+    x = 12;
+    b = x * x + 13;
+    y = b / 13 + 1;
+    z = x / b + b * y;
+    write(z);
+    c = t + z * 2;
+    write(c);
+    t = x + b + y + x / c + t;
+    write(t);
+    return 0;
+}
