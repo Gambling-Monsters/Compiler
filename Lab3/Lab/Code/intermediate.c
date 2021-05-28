@@ -737,7 +737,6 @@ int Arg_gen(struct AST_Node *cur, FieldList para)
 
     Operand temp_op = Exp_gen(AST_getChild(cur, 0));
     Operand op = copyOP(temp_op);
-    op->address = !op->address;
 
     if (para->type->kind == STRUCTURE || para->type->kind == ARRAY)
     {

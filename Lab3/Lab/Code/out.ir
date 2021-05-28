@@ -1,58 +1,63 @@
-FUNCTION main : 
-DEC v0 20
-v2 := #0
+FUNCTION search : 
+PARAM v0
+DEC v1 20
+v6 := #0
 LABEL label0 : 
-IF v2 >= #5 GOTO label1
-t0 := v2 * #4
-t1 := &v0 + t0
+IF v6 >= #5 GOTO label1
+t0 := v6 * #4
+t1 := &v1 + t0
 READ t2
 *t1 := t2
-t3 := v2 + #1
-v2 := t3
+t3 := v6 + #1
+v6 := t3
 GOTO label0
 LABEL label1 : 
-v2 := #1
+v2 := #0
+v3 := #4
 LABEL label2 : 
-IF v2 >= #5 GOTO label3
-v3 := v2
+IF v2 > v3 GOTO label3
+t5 := v2 + v3
+t4 := t5 / #2
+v4 := t4
+t6 := v4 * #4
+t7 := &v1 + t6
+v5 := *t7
+IF v5 != v0 GOTO label4
+RETURN v4
 LABEL label4 : 
-IF v3 <= #0 GOTO label5
-t4 := v3 - #1
-t5 := t4 * #4
-t6 := &v0 + t5
-t7 := v3 * #4
-t8 := &v0 + t7
-IF *t6 <= *t8 GOTO label5
-t9 := v3 * #4
-t10 := &v0 + t9
-v1 := *t10
-t11 := v3 * #4
-t12 := &v0 + t11
-t13 := v3 - #1
-t14 := t13 * #4
-t15 := &v0 + t14
-*t12 := *t15
-t16 := v3 - #1
-t17 := t16 * #4
-t18 := &v0 + t17
-*t18 := v1
-t19 := v3 - #1
-v3 := t19
-GOTO label4
+t8 := v2 * #4
+t9 := &v1 + t8
+IF v5 <= *t9 GOTO label7
+t10 := v2 * #4
+t11 := &v1 + t10
+IF v0 < *t11 GOTO label7
+IF v0 < v5 GOTO label6
+LABEL label7 : 
+t12 := v2 * #4
+t13 := &v1 + t12
+IF v5 >= *t13 GOTO label5
+t14 := v2 * #4
+t15 := &v1 + t14
+IF v0 >= *t15 GOTO label8
+IF v0 >= v5 GOTO label5
+LABEL label8 : 
+LABEL label6 : 
+t16 := v4 - #1
+v3 := t16
+GOTO label9
 LABEL label5 : 
-t20 := v2 + #1
-v2 := t20
+t17 := v4 + #1
+v2 := t17
+LABEL label9 : 
 GOTO label2
 LABEL label3 : 
-v2 := #0
-LABEL label6 : 
-IF v2 >= #5 GOTO label7
-t21 := v2 * #4
-t22 := &v0 + t21
-WRITE *t22
-t23 := #0
-t24 := v2 + #1
-v2 := t24
-GOTO label6
-LABEL label7 : 
+t18 := #0 - #1
+RETURN t18
+FUNCTION main : 
+READ t19
+v7 := t19
+ARG v7 
+t20 := CALL search
+WRITE t20
+t21 := #0
 RETURN #0
