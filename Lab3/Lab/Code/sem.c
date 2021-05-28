@@ -147,51 +147,47 @@ int checkStart(struct AST_Node *cur_node)
     Program_check(cur_node);
 }
 
-void create_write(){ 
-	char *funcname=(char*)malloc(sizeof(char*)*32);
-	strcpy(funcname,"write");
+void new_write(){ 
+	char *func_name=(char*)malloc(sizeof(char*)*32);
+	strcpy(func_name,"write");
 
-	Type functiontype=(Type)(malloc(sizeof(struct Type_)));
-	FieldList params=(FieldList)(malloc(sizeof(struct FieldList_)));
-	params->name="function write n";
-	params->type=(Type)(malloc(sizeof(struct Type_)));
-	params->type->kind=BASIC;
-	params->type->u.basic=0;
+	Type typeofFunc=(Type)(malloc(sizeof(struct Type_)));
+	FieldList func_para=(FieldList)(malloc(sizeof(struct FieldList_)));
 
-	Type returntype=(Type)(malloc(sizeof(struct Type_)));
-	returntype->kind=BASIC;
-	returntype->u.basic=0;
+	func_para->name="function write n";
+	func_para->type=(Type)(malloc(sizeof(struct Type_)));
+	func_para->type->u.basic=0;
+    func_para->type->kind=BASIC;
+	
+	Type typeofReturn=(Type)(malloc(sizeof(struct Type_)));
+	typeofReturn->kind=BASIC;
+	typeofReturn->u.basic=0;
 
-	functiontype->kind=FUNCTION;
-	functiontype->u.function.para_num=1;
-	functiontype->u.function.ret_para=returntype;
-	functiontype->u.function.paras=params;
+	typeofFunc->kind=FUNCTION;
+	typeofFunc->u.function.para_num=1;
+	typeofFunc->u.function.ret_para=typeofReturn;
+	typeofFunc->u.function.paras=func_para;
 
-	int ifdef=1;
-	int depthfake=0;
-	ST_node insert_node=new_STnode(FUNCTION_NAME,functiontype,funcname,ifdef,depthfake);
-	insert_symbol(insert_node,Table);
+	int is_define=1, empty_depth=0;
+	insert_symbol(new_STnode(FUNCTION_NAME,typeofFunc,func_name,is_define,empty_depth),Table);
 }
 
-void create_read(){
-	char *funcname=(char*)malloc(sizeof(char*)*32);
-	strcpy(funcname,"read");
-	Type functiontype=(Type)(malloc(sizeof(struct Type_)));
+void new_read(){
+	char *func_name=(char*)malloc(sizeof(char*)*32);
+	strcpy(func_name,"read");
+	Type typeofFunc=(Type)(malloc(sizeof(struct Type_)));
 
-	Type returntype=(Type)(malloc(sizeof(struct Type_)));
-	returntype->kind=BASIC;
-	returntype->u.basic=0;
+	Type typeofReturn=(Type)(malloc(sizeof(struct Type_)));
+	typeofReturn->u.basic=0;
+    typeofReturn->kind=BASIC;
 
-	functiontype->kind=FUNCTION;
-	functiontype->u.function.para_num=0;
-	functiontype->u.function.ret_para=returntype;
-	functiontype->u.function.paras=NULL;
+	typeofFunc->kind=FUNCTION;
+	typeofFunc->u.function.para_num=0;
+	typeofFunc->u.function.ret_para=typeofReturn;
+	typeofFunc->u.function.paras=NULL;
 
-	int ifdef=1;
-	int depthfake=0;
-	ST_node insert_node=new_STnode(FUNCTION_NAME,functiontype,funcname,ifdef,depthfake);
-	insert_symbol(insert_node,Table);
-
+	int is_define=1, empty_depth=0;
+	insert_symbol(new_STnode(FUNCTION_NAME,typeofFunc,func_name,is_define,empty_depth),Table);
 }
 
 int Program_check(struct AST_Node *cur_node)
@@ -199,8 +195,8 @@ int Program_check(struct AST_Node *cur_node)
     //Program -> ExfDefList
     Table = ST_init();
     struct AST_Node *tmp_node0=AST_getChild(cur_node,0);
-    create_write();
-	create_read();
+    new_write();
+	new_read();
     ExtDefList_check(tmp_node0);
     check_func();
     return 0;

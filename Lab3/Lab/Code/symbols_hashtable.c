@@ -229,20 +229,20 @@ ST_node create_symbolnode2(int kind,Type type,char*name,int is_define,int depth)
 }
 
 //向结构体符号表中插入符号，0为正常，1为结构体重定义。
-int insert_struct(Type type,char*name,int offset,char*belongtosturctname)
+int insert_struct(Type type,char*name,int offset,char*cur_structtoname)
 //insert_struct(Type type,char*name)
 {
     ST_node insert_node = init_symbol(type,name,1,0);
     insert_node->kind = VARIABLE;
     insert_node->offset = offset;
-    insert_node->belongtostructname = belongtosturctname;
+    insert_node->struct_toname = cur_structtoname;
     insert_symbol(insert_node, global_head);
     int idx = hash_pjw(name);
     if (struct_head[idx].head == NULL)
     {
         ST_node cur = malloc(sizeof(struct ST_node_));
         cur->offset = offset;
-        cur->belongtostructname = belongtosturctname;
+        cur->struct_toname = cur_structtoname;
         cur->type = type;
         cur->name = name;
         cur->hash_next = NULL;
@@ -265,13 +265,13 @@ int insert_struct(Type type,char*name,int offset,char*belongtosturctname)
         //插入
         ST_node cur = malloc(sizeof(struct ST_node_));
         cur->offset = offset;
-        cur->belongtostructname = belongtosturctname;
+        cur->struct_toname = cur_structtoname;
         cur->type = type;
         cur->hash_next = list_head;
         strcpy(cur->name, name);
-        char*structsymbol_name=(char*)malloc(strlen(name)+1);
-		strcpy(structsymbol_name,name);
-		cur->belongtostructname=structsymbol_name;//垃圾copy paste错误
+        char *sym_structname=(char*)malloc(strlen(name)+1);
+		strcpy(sym_structname,name);
+		cur->struct_toname = sym_structname;
         struct_head[idx].head = cur;
     }
     return 0;

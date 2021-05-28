@@ -93,11 +93,8 @@ struct ST_node_
     //控制域链表
     ST_node ctrl_next;
     
-    //lab3
-    int var_no;
-	int ifaddress;//记录是否是地址;
-	int offset;
-	char*belongtostructname;
+    int var_no,ifaddress,offset;
+	char *struct_toname;
 };
 
 struct hash_stack_
