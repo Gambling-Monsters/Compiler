@@ -186,14 +186,14 @@ void printIntercode(FILE *file)
         {
         case (FUNCTION_INTERCODE):
         {
-            fprintf(file, "FUNTION ");
+            fprintf(file, "FUNCTION ");
             printOP(p1->code.u.para_1.result, file);
             fprintf(file, " : \n");
             break;
         }
         case (PARAM_INTERCODE):
         {
-            fprintf(file, "RETURN ");
+            fprintf(file, "PARAM ");
             printOP(p1->code.u.para_1.result, file);
             fprintf(file, "\n");
             break;

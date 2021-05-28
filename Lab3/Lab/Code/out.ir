@@ -1,18 +1,26 @@
-FUNTION add : 
+FUNCTION fact : 
+PARAM v0
+IF v0 != #1 GOTO label0
 RETURN v0
-t1 := v0
-t2 := v0 + #4
-t0 := *t1 + *t2
+GOTO label1
+LABEL label0 : 
+t2 := v0 - #1
+ARG *t2 
+t1 := CALL fact
+t0 := v0 * t1
 RETURN t0
-FUNTION main : 
-DEC v2 8
-t3 := v2
-*t3 := #1
-t4 := v2 + #4
-*t4 := #2
-ARG v2 
-t5 := CALL add
-v1 := t5
-WRITE v1
-t6 := #0
+LABEL label1 : 
+FUNCTION main : 
+READ t3
+v1 := t3
+IF v1 <= #1 GOTO label2
+ARG &v1 
+t4 := CALL fact
+v2 := t4
+GOTO label3
+LABEL label2 : 
+v2 := #1
+LABEL label3 : 
+WRITE v2
+t5 := #0
 RETURN #0
