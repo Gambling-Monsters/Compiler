@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "*.cjson": "jsonc",
-        "*.wxss": "css",
-        "*.wxs": "javascript",
-        "symbols_hashtable.h": "c",
-        "semantic.h": "c"
-    }
-}
