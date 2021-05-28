@@ -105,7 +105,7 @@ Operand copyOP(Operand op)
 {
     Operand ans = (Operand)malloc(sizeof(struct Operand_));
     ans->kind = op->kind;
-    ans->address = ans->address;
+    ans->address = op->address;
     ans->varName = op->varName;
     ans->labelNum = op->labelNum;
     ans->funcName = op->funcName;
@@ -1000,7 +1000,8 @@ Operand Exp_gen(struct AST_Node *cur){
 			
 		}
 		else if(strcmp(my_node2->name,"LB")==0){
-			Operand expop1=copyOP(Exp_gen(my_node1));
+            Operand temp = Exp_gen(my_node1);
+			Operand expop1=copyOP(temp);
 			int depth=expop1->depth;
 
 			ST_node queryid=find_symbol(expop1->varName,__INT_MAX__);
