@@ -1,0 +1,35 @@
+FUNCTION swap : 
+PARAM v0
+PARAM v1
+v2 := v0
+v0 := v1
+v1 := v2
+WRITE v0
+t0 := #0
+WRITE v1
+t1 := #0
+RETURN v0
+FUNCTION main : 
+DEC v3 20
+v4 := #0
+LABEL label0 : 
+IF v4 >= #5 GOTO label1
+t2 := v4 * #4
+t3 := &v3 + t2
+READ t4
+*t3 := t4
+IF v4 <= #0 GOTO label2
+t6 := v4 - #1
+t7 := t6 * #4
+t8 := &v3 + t7
+t9 := v4 * #4
+t10 := &v3 + t9
+ARG *t10 
+ARG *t8 
+t5 := CALL swap
+LABEL label2 : 
+t11 := v4 + #1
+v4 := t11
+GOTO label0
+LABEL label1 : 
+RETURN #0
