@@ -22,7 +22,7 @@ ST_node init_symbol(Type type, char *name, int is_define, int depth)
 {
     ST_node my_node = (ST_node)malloc(sizeof(struct ST_node_));
     my_node->type = type;
-    strcpy(my_node->name, name);
+    my_node->name = name;
     my_node->depth = depth;
     my_node->is_define = is_define;
     my_node->var_no = -1;
