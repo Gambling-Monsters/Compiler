@@ -735,8 +735,9 @@ int Arg_gen(struct AST_Node *cur, FieldList para)
     if (cur == NULL || para == NULL)
         return 0;
 
-    Operand temp_op = Exp_gen(AST_getChild(cur, 0)); //使用局部变量防止修改原来的值;
+    Operand temp_op = Exp_gen(AST_getChild(cur, 0));
     Operand op = copyOP(temp_op);
+    op->address = !op->address;
 
     if (para->type->kind == STRUCTURE || para->type->kind == ARRAY)
     {
