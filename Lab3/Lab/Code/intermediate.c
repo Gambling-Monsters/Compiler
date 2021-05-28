@@ -701,7 +701,7 @@ Operand VarDec_gen(struct AST_Node *cur)
     {
 
         struct AST_Node *find_node = AST_getChild(ID_node, 0);
-        while (strcmp(find_node->name, "ID")==0)
+        while (strcmp(find_node->name, "ID"))
             find_node = find_node->child;
 
         ST_node my_id = find_symbol(find_node->is_string, __INT_MAX__);

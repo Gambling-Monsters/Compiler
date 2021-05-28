@@ -153,7 +153,7 @@ void create_write(){
 
 	Type functiontype=(Type)(malloc(sizeof(struct Type_)));
 	FieldList params=(FieldList)(malloc(sizeof(struct FieldList_)));
-	strcpy(params->name,"function write n");
+	params->name="function write n";
 	params->type=(Type)(malloc(sizeof(struct Type_)));
 	params->type->kind=BASIC;
 	params->type->u.basic=0;
