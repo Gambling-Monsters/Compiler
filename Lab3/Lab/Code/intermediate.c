@@ -186,14 +186,14 @@ void printIntercode(FILE *file)
         {
         case (FUNCTION_INTERCODE):
         {
-            fprintf(file, "FUNTION ");
+            fprintf(file, "FUNCTION ");
             printOP(p1->code.u.para_1.result, file);
             fprintf(file, " : \n");
             break;
         }
         case (PARAM_INTERCODE):
         {
-            fprintf(file, "RETURN ");
+            fprintf(file, "PARAM ");
             printOP(p1->code.u.para_1.result, file);
             fprintf(file, "\n");
             break;
@@ -735,8 +735,9 @@ int Arg_gen(struct AST_Node *cur, FieldList para)
     if (cur == NULL || para == NULL)
         return 0;
 
-    Operand temp_op = Exp_gen(AST_getChild(cur, 0)); //使用局部变量防止修改原来的值;
+    Operand temp_op = Exp_gen(AST_getChild(cur, 0));
     Operand op = copyOP(temp_op);
+    op->address = !op->address;
 
     if (para->type->kind == STRUCTURE || para->type->kind == ARRAY)
     {
