@@ -533,3 +533,16 @@ int symbol_Kind_find(Type *type, char *name, int *ifdef, int depth, int *kind)
             return -1;
     }
 }
+
+int getarraydepth(ST_node arr_node)
+{
+    int cnt = 0;
+    Type temp = arr_node->type;
+
+    while (temp->kind == ARRAY)
+    {
+        cnt += 1;
+        temp = temp->u.array.elem;
+    }
+    return cnt;
+}
