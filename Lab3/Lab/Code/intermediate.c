@@ -792,18 +792,15 @@ Operand Exp_Exp(struct AST_Node *cur_node){
             Operand op1=Exp_gen(Exp1);
             Operand op2=Exp_gen(Exp2);
             int flag=0;
+            ST_node queryid1=find_symbol(op1->varName,__INT_MAX__);
+            ST_node queryid2=find_symbol(op2->varName,__INT_MAX__);
             if(op1->varName!=NULL&&op2->varName!=NULL){
-                ST_node queryid1=find_symbol(op1->varName,__INT_MAX__);
-                ST_node queryid2=find_symbol(op2->varName,__INT_MAX__);
                 if(queryid1->type->kind==ARRAY&&queryid2->type->kind==ARRAY)
                     if(op1->address==VAR_OPERAND&&op2->address==VAR_OPERAND)
                         flag=1;
             }
             if(flag==1)
             {
-                ST_node queryid1=find_symbol(op1->varName,__INT_MAX__);
-                ST_node queryid2=find_symbol(op2->varName,__INT_MAX__);
-
                 int depth1=op1->depth;
                 int depth2=op2->depth;
 
@@ -1046,18 +1043,7 @@ void Cond_gen(struct AST_Node* cur_node,Operand label_true,Operand label_false){
                 newIntercode(IFGOTO_INTERCODE,result,"!=",zero,label_true);
             else if(label_false!=NULL)
                 newIntercode(IFGOTO_INTERCODE,result,"==",zero,label_false);
-        }else if(strcmp(OP_node->name,"LB")==0){
-            Operand op=Exp_gen(cur_node);
-            if(label_true!=NULL&&label_false!=NULL){
-                newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
-                newIntercode(GOTO_INTERCODE,label_false);
-            }else if(label_true!=NULL){
-                newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
-            }else if(label_false!=NULL){
-                newIntercode(IFGOTO_INTERCODE,op,"==",zero,label_false);
-            }
-
-        }else if(strcmp(OP_node->name,"DOT")==0){
+        }else if(strcmp(OP_node->name,"LB")==0 || strcmp(OP_node->name,"DOT")==0){
             Operand op=Exp_gen(cur_node);
             if(label_true!=NULL&&label_false!=NULL){
                 newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
