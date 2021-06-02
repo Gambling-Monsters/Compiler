@@ -1082,8 +1082,7 @@ void Cond_gen(struct AST_Node* cur_node,Operand label_true,Operand label_false){
             newIntercode(IFGOTO_INTERCODE,op,"==",zero,label_false);
         }
     }else if(strcmp(case_node->name,"LP")==0){
-        struct AST_Node* expnode=AST_getChild(cur_node,1);
-        Cond_gen(expnode,label_true,label_false);
+        Cond_gen(case_node->next_sib,label_true,label_false);
     }else if(strcmp(case_node->name,"ID")==0){
         Operand op=Exp_gen(cur_node);
         if(label_true!=NULL&&label_false!=NULL){
