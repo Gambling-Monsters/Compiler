@@ -1,5 +1,4 @@
 #include "sem.h"
-int debug_cnt = 0;
 //创建
 ST_node new_STnode(int kind, Type type, char *name, int is_define, int depth)
 {
@@ -8,15 +7,13 @@ ST_node new_STnode(int kind, Type type, char *name, int is_define, int depth)
 
     tmp_stnode->kind = kind;
     tmp_stnode->is_define = is_define;
-    //printf("here.\n");
-    //strcpy(tmp_stnode->name,name);
     tmp_stnode->name = name;
 
     tmp_stnode->depth = depth;
     tmp_stnode->type = type;
     tmp_stnode->hash_next = NULL;
     tmp_stnode->ctrl_next = NULL;
-    //printf("here.\n");
+    tmp_stnode->var_no=-1;
     return tmp_stnode;
 }
 
@@ -33,6 +30,7 @@ struct AST_Node *AST_getChild(struct AST_Node *cur_node, int depth)
 //type_eq
 void print_error(int err_type, int err_col, char *message)
 {
+    return;
     printf("Error type %d at Line %d: ", err_type, err_col);
     switch (err_type)
     {
@@ -149,11 +147,57 @@ int checkStart(struct AST_Node *cur_node)
     Program_check(cur_node);
 }
 
+void new_write(){ 
+	char *func_name=(char*)malloc(sizeof(char*)*32);
+	strcpy(func_name,"write");
+
+	Type typeofFunc=(Type)(malloc(sizeof(struct Type_)));
+	FieldList func_para=(FieldList)(malloc(sizeof(struct FieldList_)));
+
+	func_para->name="function write n";
+	func_para->type=(Type)(malloc(sizeof(struct Type_)));
+	func_para->type->u.basic=0;
+    func_para->type->kind=BASIC;
+	
+	Type typeofReturn=(Type)(malloc(sizeof(struct Type_)));
+	typeofReturn->kind=BASIC;
+	typeofReturn->u.basic=0;
+
+	typeofFunc->kind=FUNCTION;
+	typeofFunc->u.function.para_num=1;
+	typeofFunc->u.function.ret_para=typeofReturn;
+	typeofFunc->u.function.paras=func_para;
+
+	int is_define=1, empty_depth=0;
+	insert_symbol(new_STnode(FUNCTION_NAME,typeofFunc,func_name,is_define,empty_depth),Table);
+}
+
+void new_read(){
+	char *func_name=(char*)malloc(sizeof(char*)*32);
+	strcpy(func_name,"read");
+	Type typeofFunc=(Type)(malloc(sizeof(struct Type_)));
+
+	Type typeofReturn=(Type)(malloc(sizeof(struct Type_)));
+	typeofReturn->u.basic=0;
+    typeofReturn->kind=BASIC;
+
+	typeofFunc->kind=FUNCTION;
+	typeofFunc->u.function.para_num=0;
+	typeofFunc->u.function.ret_para=typeofReturn;
+	typeofFunc->u.function.paras=NULL;
+
+	int is_define=1, empty_depth=0;
+	insert_symbol(new_STnode(FUNCTION_NAME,typeofFunc,func_name,is_define,empty_depth),Table);
+}
+
 int Program_check(struct AST_Node *cur_node)
 {
     //Program -> ExfDefList
     Table = ST_init();
-    ExtDefList_check(AST_getChild(cur_node, 0));
+    struct AST_Node *tmp_node0=AST_getChild(cur_node,0);
+    new_write();
+	new_read();
+    ExtDefList_check(tmp_node0);
     check_func();
     return 0;
 }
@@ -162,11 +206,14 @@ int ExtDefList_check(struct AST_Node *cur_node)
 {
     //ExfDefList -> ExfDef ExfDefList
     //| (empty)
+    if(cur_node==NULL)return 0;
+    struct AST_Node *tmp_node0=AST_getChild(cur_node,0);
+    if(tmp_node0==NULL)return 0;
+    struct AST_Node *tmp_node1=AST_getChild(cur_node,1);
+    ExtDef_check(tmp_node0);
 
-    ExtDef_check(AST_getChild(cur_node, 0));
-
-    if (AST_getChild(cur_node, 1) != NULL)
-        ExtDefList_check(AST_getChild(cur_node, 1));
+    if (tmp_node1 != NULL)
+        ExtDefList_check(tmp_node1);
     return 0;
 }
 
@@ -194,6 +241,7 @@ int ExtDef_check(struct AST_Node *cur_node)
             struct AST_Node *FunDec_node = tmp_node1;
             if (strcmp(tmp_node2->name, "SEMI") == 0)
             {
+
                 hash_stack new_hashstack1 = enter_domain();
 
                 FunDec_check(FunDec_node, 0, tmp_type, new_hashstack1);
@@ -207,16 +255,11 @@ int ExtDef_check(struct AST_Node *cur_node)
                 depth_++;
                 struct AST_Node *CompSt_node = tmp_node2;
                 CompSt_check(CompSt_node, new_hashstack1, tmp_type);
-                //assert(0);
                 depth_--;
                 exit_domain();
             }
-            //assert(0);
-            //exit_domain();
-            //assert(0);
         }
     }
-    //printf("mark\n");
     return 0;
 }
 
@@ -351,7 +394,7 @@ int Def_check(struct AST_Node *cur_node, hash_stack cur_stack)
     //	Def -> Specifier DecList SEMI
 
     Type Speci_type = Specifier_check(AST_getChild(cur_node, 0));
-
+    if(Speci_type == NULL) return 0;
     DecList_check(AST_getChild(cur_node, 1), cur_stack, Speci_type);
     //printf("here4753.\n");
 
@@ -689,7 +732,7 @@ Type Exp_check(struct AST_Node *cur_node)
                             char *node2_name = tmp_nodee2->is_string;
                             char *field_name = (char *)(malloc(sizeof(char) * (1 + strlen(node2_name) + strlen(exp_nodetype->u.my_struct.name))));
                             strcpy(field_name, node2_name);
-                            strcat(field_name, exp_nodetype->u.my_struct.name);
+                            //strcat(field_name, exp_nodetype->u.my_struct.name);
                             Type find_Type = (Type)(malloc(sizeof(struct Type_)));
                             if (struct_Find(&find_Type, field_name) == 0)
                             {
@@ -969,21 +1012,32 @@ Type Specifier_check(struct AST_Node *cur_node)
                     {
                         struct AST_Node *Def_node = tmp_node03;
                         FieldList result = NULL, now_field = NULL;
+                        int cur_offset=0;
                         while (1)
                         {
                             struct AST_Node *tmp_defnode0 = AST_getChild(Def_node, 0);
                             if (tmp_defnode0 == NULL)
                                 break;
-                            FieldList tmp_defplus = Def_struct_check(tmp_defnode0, name_ofStruct);
+                            int tmp_offset=0;
+                            FieldList tmp_defplus = Def_struct_check(tmp_defnode0, name_ofStruct,cur_offset, &tmp_offset);
+                            cur_offset+=tmp_offset;
                             if (result == NULL)
                             {
                                 result = tmp_defplus;
-                                now_field = result;
+                                FieldList tmp_fieldtail=tmp_defplus;
+                                while(tmp_fieldtail->tail!=NULL){
+                                    tmp_fieldtail=tmp_fieldtail->tail;
+                                }
+                                now_field=tmp_fieldtail;
                             }
                             else
                             {
                                 now_field->tail = tmp_defplus;
-                                now_field = now_field->tail;
+                                FieldList tmp_fieldtail=tmp_defplus;
+                                while(tmp_fieldtail->tail!=NULL){
+                                    tmp_fieldtail=tmp_fieldtail->tail;
+                                }
+                                now_field=tmp_fieldtail;
                             }
                             Def_node = AST_getChild(Def_node, 1);
                             if (Def_node == NULL)
@@ -1028,21 +1082,32 @@ Type Specifier_check(struct AST_Node *cur_node)
             {
                 struct AST_Node *Def_node = tmp_node03;
                 FieldList result = NULL,now_field = NULL;
+                int cur_offset=0;
                 while (1)
                 {
                     struct AST_Node *tmp_defnode0 = AST_getChild(Def_node, 0);
                     if (tmp_defnode0 == NULL)
                         break;
-                    FieldList tmp_defplus = Def_struct_check(tmp_defnode0, name_ofStruct);
+                    int tmp_offset=0;
+                    FieldList tmp_defplus = Def_struct_check(tmp_defnode0, name_ofStruct,cur_offset, &tmp_offset);
+                    cur_offset+=tmp_offset;
                     if (result == NULL)
                     {
                         result = tmp_defplus;
-                        now_field = result;
+                        FieldList tmp_fieldtail=tmp_defplus;
+						while(tmp_fieldtail->tail!=NULL){
+							tmp_fieldtail=tmp_fieldtail->tail;
+						}
+                        now_field=tmp_fieldtail;
                     }
                     else
                     {
                         now_field->tail = tmp_defplus;
-                        now_field = now_field->tail;
+                        FieldList tmp_fieldtail=tmp_defplus;
+						while(tmp_fieldtail->tail!=NULL){
+							tmp_fieldtail=tmp_fieldtail->tail;
+						}
+						now_field=tmp_fieldtail;
                     }
                     Def_node = AST_getChild(Def_node, 1);
                     if (Def_node == NULL)
@@ -1055,8 +1120,8 @@ Type Specifier_check(struct AST_Node *cur_node)
 
     return type;
 }
-
-FieldList Def_struct_check(struct AST_Node *cur_node, char *struct_name)
+extern int typeSize(Type cur);
+FieldList Def_struct_check(struct AST_Node *cur_node, char *struct_name,int cur_offset,int *tmp_offset)
 {
     /*
 	Def -> Specifier DecList SEMI
@@ -1067,18 +1132,23 @@ FieldList Def_struct_check(struct AST_Node *cur_node, char *struct_name)
     struct AST_Node *new_DecListNode = DecList_node;
     Type nowtype = Specifier_check(AST_getChild(cur_node, 0));
     FieldList res_field = NULL, tmp_field = NULL;
+    int offset=0;
+    struct AST_Node* temp111=AST_getChild(new_DecListNode,1);
+    
     while (AST_getChild(new_DecListNode, 1) != NULL)
     {
         struct AST_Node *Dec_node = AST_getChild(new_DecListNode, 0);
         FieldList Dec_field = Dec_struct_check(Dec_node, nowtype);
         char *Dec_name = (char *)malloc(1 + strlen(struct_name) + strlen(Dec_field->name));
         strcpy(Dec_name, Dec_field->name);
-        strcat(Dec_name, struct_name);
+        //strcat(Dec_name, struct_name);
         Type tmp_typee = (Type)malloc(sizeof(struct Type_));
         if (struct_Find(&tmp_typee, Dec_name) == 0) //域名重复定义 query_struct_name
             print_error(15, Dec_node->lineno, Dec_field->name);
         else
-            insert_struct(Dec_field->type, Dec_name);
+            insert_struct(Dec_field->type, Dec_name, offset+cur_offset, struct_name);
+        int typesize=typeSize(Dec_field->type);
+        offset+=typesize;
         if (res_field == NULL)
         {
             res_field = Dec_field;
@@ -1095,12 +1165,14 @@ FieldList Def_struct_check(struct AST_Node *cur_node, char *struct_name)
     FieldList Dec_field = Dec_struct_check(Dec_node, nowtype);
     char *Dec_name = (char *)malloc(strlen(struct_name) + strlen(Dec_field->name) + 1);
     strcpy(Dec_name, Dec_field->name);
-    strcat(Dec_name, struct_name);
+    //strcat(Dec_name, struct_name);
     Type nulltype = (Type)malloc(sizeof(struct Type_));
     if (struct_Find(&nulltype, Dec_name) == 0)
         print_error(15, Dec_node->lineno, Dec_field->name);
     else
-        insert_struct(Dec_field->type, Dec_name);
+        insert_struct(Dec_field->type, Dec_name,offset+cur_offset, struct_name);
+    int typesize=typeSize(Dec_field->type);
+    offset+=typesize;
     if (res_field == NULL)
     {
         res_field = Dec_field;
@@ -1111,7 +1183,7 @@ FieldList Def_struct_check(struct AST_Node *cur_node, char *struct_name)
         tmp_field->tail = Dec_field;
         tmp_field = tmp_field->tail;
     }
-
+    *tmp_offset = offset;
     return res_field;
 }
 

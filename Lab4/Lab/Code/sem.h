@@ -53,7 +53,7 @@ int FunDec_check(struct AST_Node *cur_node, const int is_define, const Type cur_
 FieldList VarList_check(struct AST_Node *cur_node, hash_stack cur_stack);
 FieldList ParamDec_check(struct AST_Node *cur_node);
 Type Specifier_check(struct AST_Node *cur_node);
-FieldList Def_struct_check(struct AST_Node *cur_node, char *struct_name);
+FieldList Def_struct_check(struct AST_Node *cur_node, char *struct_name,int cur_offset,int *tmp_offset);
 FieldList Dec_struct_check(struct AST_Node *cur_node, Type cur_type);
 FieldList VarDec_check(struct AST_Node *cur_node, Type cur_type);
 int ExtDecList_check(struct AST_Node *cur_node, Type cur_type);

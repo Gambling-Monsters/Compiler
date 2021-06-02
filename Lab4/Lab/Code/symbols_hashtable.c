@@ -6,7 +6,7 @@ struct hash_stack_ global_head[SYMBOL_LEN] = {NULL};
 struct hash_stack_ struct_head[SYMBOL_LEN] = {NULL};
 hash_stack domain_head = NULL;
 func_list func_head = NULL;
-
+extern hash_stack Table;
 //初始符号表
 hash_stack ST_init()
 //init_symboltable()
@@ -22,15 +22,18 @@ ST_node init_symbol(Type type, char *name, int is_define, int depth)
 {
     ST_node my_node = (ST_node)malloc(sizeof(struct ST_node_));
     my_node->type = type;
-    strcpy(my_node->name, name);
+    my_node->name = name;
     my_node->depth = depth;
     my_node->is_define = is_define;
+    my_node->var_no = -1;
     return my_node;
 }
 
 //插入节点
 void insert_symbol(ST_node my_node, hash_stack domain)
+//insert_symbol2(struct Symbol_node*p,struct Symbol_bucket* scope)
 {
+    my_node->var_no = -1;
     int idx = hash_pjw(my_node->name);
 
     if (domain == NULL || my_node->hash_next != NULL || my_node->ctrl_next != NULL)
@@ -64,11 +67,9 @@ ST_node find_symbol(char *name, int depth)
     ST_node cur = global_head[idx].head;
     ST_node ret_node = NULL;
     //遍历哈希值为该值的链表，若hash不到则直接返回NULL。
-    printf("%s\n", name);
     while (cur)
     {
         //目前的深度应该深于查找节点的深度, 我们只需选择最深的那一个
-        printf(" %s\n", cur->name);
         if (strcmp(cur->name, name) == 0 && depth >= cur->depth)
             ret_node = cur;
         cur = cur->hash_next;
@@ -113,11 +114,13 @@ void delete_node(char *name, int depth, hash_stack domain)
 
     while (HT_iter->hash_next != node_del)
         HT_iter = HT_iter->hash_next;
+
     //将链表头设为哑节点的下一个节点。
     HT_iter->hash_next = node_del->hash_next;
     domain_iter->ctrl_next = node_del->ctrl_next;
     global_head[idx].head = HT_iter->hash_next;
     domain->head = domain_iter->ctrl_next;
+
     //free_node(node_del);
 
     return;
@@ -127,6 +130,7 @@ void delete_node(char *name, int depth, hash_stack domain)
 hash_stack enter_domain()
 //enter_scope()
 {
+    return domain_head;
     hash_stack ret = malloc(sizeof(struct hash_stack_));
     ret->next = NULL;
     ret->head = NULL;
@@ -141,6 +145,7 @@ hash_stack enter_domain()
 void exit_domain()
 //exit_scope()
 {
+    return;
     hash_stack domain_iter = domain_head;
     hash_stack domain_del = domain_iter;
     while (domain_del->next != NULL)
@@ -208,14 +213,36 @@ void check_func()
     return;
 }
 
+ST_node create_symbolnode2(int kind,Type type,char*name,int is_define,int depth)
+{
+	ST_node insert_node=(ST_node)malloc(sizeof(struct ST_node_));
+	insert_node->hash_next=NULL;
+	insert_node->ctrl_next=NULL;
+	insert_node->kind=kind;
+	insert_node->type=type;
+	insert_node->name=name;
+	insert_node->depth=depth;
+	insert_node->is_define=is_define;
+	insert_node->var_no=-1;
+	return insert_node;
+;
+}
+
 //向结构体符号表中插入符号，0为正常，1为结构体重定义。
-int insert_struct(Type type, char *name)
+int insert_struct(Type type,char*name,int offset,char*cur_structtoname)
 //insert_struct(Type type,char*name)
 {
+    ST_node insert_node = init_symbol(type,name,1,0);
+    insert_node->kind = VARIABLE;
+    insert_node->offset = offset;
+    insert_node->struct_toname = cur_structtoname;
+    insert_symbol(insert_node, global_head);
     int idx = hash_pjw(name);
     if (struct_head[idx].head == NULL)
     {
         ST_node cur = malloc(sizeof(struct ST_node_));
+        cur->offset = offset;
+        cur->struct_toname = cur_structtoname;
         cur->type = type;
         cur->name = name;
         cur->hash_next = NULL;
@@ -237,9 +264,14 @@ int insert_struct(Type type, char *name)
         }
         //插入
         ST_node cur = malloc(sizeof(struct ST_node_));
+        cur->offset = offset;
+        cur->struct_toname = cur_structtoname;
         cur->type = type;
         cur->hash_next = list_head;
         strcpy(cur->name, name);
+        char *sym_structname=(char*)malloc(strlen(name)+1);
+		strcpy(sym_structname,name);
+		cur->struct_toname = sym_structname;
         struct_head[idx].head = cur;
     }
     return 0;

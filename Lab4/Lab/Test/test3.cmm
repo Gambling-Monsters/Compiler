@@ -3,12 +3,10 @@ struct Operands
     int o1;
     int o2;
 };
-
 int add(struct Operands temp)
 {
     return (temp.o1 + temp.o2);
 }
-
 int main()
 {
     int n;
@@ -16,6 +14,6 @@ int main()
     op.o1 = 1;
     op.o2 = 2;
     n = add(op);
-    write(n);
+    write(n); 
     return 0;
 }

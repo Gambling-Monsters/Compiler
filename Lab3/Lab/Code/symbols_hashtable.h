@@ -24,14 +24,14 @@ hash_stack enter_domain();
 void exit_domain();
 void add_func(char *name, int func_lineno);
 void check_func();
-int insert_struct(Type type, char *name);
+int insert_struct(Type type,char*name,int offset,char*belongtosturctname);
 ST_node find_struct(char *name);
 int type_eq(Type A, Type B);
 int strong_array_check(Type A, Type B);
 unsigned int hash_pjw(char *name);
-int query_struct(Type *type, char *name);
-int query_symbol_exist_mrk(Type *type, char *name, int *ifdef, int depth, int mrk);
-int query_symbol_exist2(Type *type, char *name, int *ifdef, int depth, int *kind);
+int struct_Find(Type *type, char *name);
+int symbol_Find_mrk(Type *type, char *name, int *ifdef, int depth, int mrk);
+int symbol_Kind_find(Type *type, char *name, int *ifdef, int depth, int *kind);
 struct FieldList_
 {
     char *name;     //域的名字;
@@ -92,6 +92,9 @@ struct ST_node_
     ST_node hash_next;
     //控制域链表
     ST_node ctrl_next;
+    
+    int var_no,ifaddress,offset;
+	char *struct_toname;
 };
 
 struct hash_stack_
