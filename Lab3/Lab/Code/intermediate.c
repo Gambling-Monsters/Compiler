@@ -854,10 +854,7 @@ Operand Exp_Exp(struct AST_Node *cur_node){
         int offset=queryid->offset;
 
         Operand ttemp=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
-        if(temp_expop->address==ADDRESS_OPERAND)
-            temp_expop->address=VAR_OPERAND;
-        else
-            temp_expop->address=ADDRESS_OPERAND;
+        temp_expop->address = !temp_expop->address;
         if(offset==0)
             newIntercode(ASSIGN_INTERCODE,ttemp,temp_expop);
         else{
@@ -868,15 +865,13 @@ Operand Exp_Exp(struct AST_Node *cur_node){
         ret_op->address=ADDRESS_OPERAND;
         ret_op->varName=Exp2->is_string;
         return ret_op;
-        
     }
     else if(strcmp(OP_node->name,"LB")==0){
-        Operand temp = Exp_gen(Exp1);
-        Operand expop1=copyOP(temp);
-        int depth=expop1->depth;
+        Operand exp_op1=copyOP(Exp_gen(Exp1));
+        int depth=exp_op1->depth;
 
-        ST_node queryid=find_symbol(expop1->varName,__INT_MAX__);
-        Type ttemptype=queryid->type;
+        ST_node arr_node=find_symbol(exp_op1->varName,__INT_MAX__);
+        Type ttemptype=arr_node->type;
         Type temptype=ttemptype;
         int cnt=0;
         while(temptype->kind==ARRAY){
@@ -903,22 +898,22 @@ Operand Exp_Exp(struct AST_Node *cur_node){
         free(arraysize);
         offset=offset*typesize;
 
-        struct AST_Node*tempnode3=AST_getChild(cur_node,2);
-        Operand expop2=Exp_gen(tempnode3);
+        struct AST_Node* index_node=OP_node->next_sib;
+        Operand expop2=Exp_gen(index_node);
         
         Operand tempop1=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
         Operand constantop1=createOP(CONSTANT_OPERAND,VAR_OPERAND,offset);
         newIntercode(MUL_INTERCODE,tempop1,expop2,constantop1);
 
         Operand tempop2=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
-        tempop2->varName=expop1->varName;
+        tempop2->varName=exp_op1->varName;
         tempop2->depth=depth+1;
-        if(depth==0&&expop1->address==VAR_OPERAND){
-            expop1->address=ADDRESS_OPERAND;
+        if(depth==0&&exp_op1->address==VAR_OPERAND){
+            exp_op1->address=ADDRESS_OPERAND;
         }else{
-            expop1->address=VAR_OPERAND;
+            exp_op1->address=VAR_OPERAND;
         }
-        newIntercode(ADD_INTERCODE,tempop2,expop1,tempop1);
+        newIntercode(ADD_INTERCODE,tempop2,exp_op1,tempop1);
 
         ret_op=copyOP(tempop2);
         if(tempop2->depth==cnt)
