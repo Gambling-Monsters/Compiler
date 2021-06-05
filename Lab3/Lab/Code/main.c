@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include "intermediate.h"
 extern FILE *yyin;
 extern int yydebug;
 extern int lexError;
