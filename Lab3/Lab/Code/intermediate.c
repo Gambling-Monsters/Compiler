@@ -105,7 +105,7 @@ Operand copyOP(Operand op)
 {
     Operand ans = (Operand)malloc(sizeof(struct Operand_));
     ans->kind = op->kind;
-    ans->address = ans->address;
+    ans->address = op->address;
     ans->varName = op->varName;
     ans->labelNum = op->labelNum;
     ans->funcName = op->funcName;
@@ -146,7 +146,7 @@ void printOP(Operand op, FILE *file)
         {
             fprintf(file, "&");
         }
-        fprintf(file, "v%d", op->labelNum);
+        fprintf(file, "v%d", op->labelNum+1);
         break;
     }
     case (CONSTANT_OPERAND):
@@ -165,7 +165,7 @@ void printOP(Operand op, FILE *file)
         {
             fprintf(file, "*");
         }
-        fprintf(file, "t%d", op->labelNum);
+        fprintf(file, "t%d", op->labelNum+1);
         break;
     }
     case (LABEL_OPERAND):
@@ -332,46 +332,46 @@ void newIntercode(int kind, ...)
 
     switch (kind)
     {
-    case FUNCTION_INTERCODE:
-    case PARAM_INTERCODE:
-    case RETURN_INTERCODE:
-    case LABEL_INTERCODE:
-    case GOTO_INTERCODE:
-    case WRITE_INTERCODE:
-    case READ_INTERCODE:
-    case ARG_INTERCODE:
-    {
-        p1->code.u.para_1.result = va_arg(args, Operand);
-        break;
-    }
+        case FUNCTION_INTERCODE:
+        case PARAM_INTERCODE:
+        case RETURN_INTERCODE:
+        case LABEL_INTERCODE:
+        case GOTO_INTERCODE:
+        case WRITE_INTERCODE:
+        case READ_INTERCODE:
+        case ARG_INTERCODE:
+        {
+            p1->code.u.para_1.result = va_arg(args, Operand);
+            break;
+        }
 
-    case ASSIGN_INTERCODE:
-    case DEC_INTERCODE:
-    case CALL_INTERCODE:
-    {
-        p1->code.u.para_2.left = va_arg(args, Operand);
-        p1->code.u.para_2.right = va_arg(args, Operand);
-        break;
-    }
+        case ASSIGN_INTERCODE:
+        case DEC_INTERCODE:
+        case CALL_INTERCODE:
+        {
+            p1->code.u.para_2.left = va_arg(args, Operand);
+            p1->code.u.para_2.right = va_arg(args, Operand);
+            break;
+        }
 
-    case ADD_INTERCODE:
-    case SUB_INTERCODE:
-    case MUL_INTERCODE:
-    case DIV_INTERCODE:
-    {
-        p1->code.u.para_3.result = va_arg(args, Operand);
-        p1->code.u.para_3.op1 = va_arg(args, Operand);
-        p1->code.u.para_3.op2 = va_arg(args, Operand);
-        break;
-    }
+        case ADD_INTERCODE:
+        case SUB_INTERCODE:
+        case MUL_INTERCODE:
+        case DIV_INTERCODE:
+        {
+            p1->code.u.para_3.result = va_arg(args, Operand);
+            p1->code.u.para_3.op1 = va_arg(args, Operand);
+            p1->code.u.para_3.op2 = va_arg(args, Operand);
+            break;
+        }
 
-    case IFGOTO_INTERCODE:
-    {
-        p1->code.u.para_4.op1 = va_arg(args, Operand);
-        p1->code.u.para_4.relop = va_arg(args, char *);
-        p1->code.u.para_4.op2 = va_arg(args, Operand);
-        p1->code.u.para_4.op3 = va_arg(args, Operand);
-    }
+        case IFGOTO_INTERCODE:
+        {
+            p1->code.u.para_4.op1 = va_arg(args, Operand);
+            p1->code.u.para_4.relop = va_arg(args, char *);
+            p1->code.u.para_4.op2 = va_arg(args, Operand);
+            p1->code.u.para_4.op3 = va_arg(args, Operand);
+        }
     }
     Link_Insert(p1);
     va_end(args);
@@ -412,796 +412,658 @@ int typeSize(Type cur)
 }
 
 //生成部分
-int init_gen(struct AST_Node* cur, FILE *fp)
+void init_gen(struct AST_Node* cur_node, FILE *fp)
 {
-    success = 1;
     varCount = 0, tmpCount = 0, labelCount = 0;
     head_code = (InterCode_L)malloc(sizeof(struct InterCode_Link));
     head_code->next = NULL;
     head_code->prev = NULL;
     tail_code = head_code;
 
-    Program_gen(cur);
+    Program_gen(cur_node);
     printIntercode(fp);
 }
 
-void Program_gen(struct AST_Node *cur)
+void Program_gen(struct AST_Node *cur_node)
 {
-    int result = ExtDefList_gen(AST_getChild(cur, 0));
-    assert(result != 0);
+    //Program -> ExfDefList    
+    ExtDefList_gen(cur_node->child);
     return;
 }
 
-int ExtDefList_gen(struct AST_Node *cur)
+void ExtDefList_gen(struct AST_Node *cur_node)
 {
+    //ExfDefList -> ExfDef ExfDefList
+    //| (empty)
 
-    struct AST_Node *ExtDef_node = AST_getChild(cur, 0);
-    success = 0;
+    if(cur_node == NULL) return;
 
-    if (ExtDef_node != NULL)
-    {
-        int res = ExtDef_gen(ExtDef_node);
-        success = res;
-        struct AST_Node *ExtDefList_node = AST_getChild(cur, 1);
-        if (ExtDefList_node != NULL)
-        {
-            res = ExtDefList_gen(ExtDefList_node);
-            success &= res;
-        }
-    }
+    struct AST_Node *ExtDef_node = cur_node->child;
+    if (ExtDef_node == NULL) return;
 
-    return success;
+    struct AST_Node *ExtDefList_node = ExtDef_node->next_sib;
+
+    ExtDef_gen(ExtDef_node);
+    if (ExtDefList_node != NULL)
+        ExtDefList_gen(ExtDefList_node);
+
+    return;
 }
 
-int ExtDef_gen(struct AST_Node *cur)
+void ExtDef_gen(struct AST_Node *cur_node)
 {
-    success = 1;
-    struct AST_Node *FD_node = AST_getChild(cur, 1);
+    // ExtDef -> 
+    //   Specifier ExtDecList SEMI(pass)
+    // | Specifier SEMI(pass)
+    // | Specifier FunDec CompSt
+    // | Specifier FunDec SEMI(pass)
 
-    if (strcmp(FD_node->name, "FunDec") == 0)
+    struct AST_Node *FD_node = AST_getChild(cur_node, 1);
+    struct AST_Node *CS_node = AST_getChild(cur_node, 2);
+
+    if (strcmp(FD_node->name, "FunDec") == 0 && strcmp(CS_node->name, "CompSt")==0)
     {
-        struct AST_Node *CS_node = AST_getChild(cur, 2);
-        if (strcmp(CS_node->name, "CompSt")==0)
-        {
-            success &= FunDec_gen(FD_node);
-            success &= CompSt_gen(CS_node);
-        }
+        FunDec_gen(FD_node);
+        CompSt_gen(CS_node);
     }
 
-    return success;
+    return;
 }
 
-int FunDec_gen(struct AST_Node *cur)
+void CompSt_gen(struct AST_Node *cur_node)
 {
-    struct AST_Node *idnode = AST_getChild(cur, 0);
-    Operand funop = createOP(FUNCTION_OPERAND, VAR_OPERAND, idnode->is_string);
-    newIntercode(FUNCTION_INTERCODE, funop);
+    // CompSt -> LC DefList StmtList RC
+    // DefList -> Def DefList
+    // | (empty)
+    struct AST_Node *temp = AST_getChild(cur_node, 1);
 
-    ST_node fun_symbol = find_symbol(funop->funcName, __INT_MAX__);
-    if (fun_symbol == NULL)
-    {
-        printf("unsuccessful fun_symbol query!\n");
-        assert(0);
-    }
-
-    int para_num = fun_symbol->type->u.function.para_num;
-    if (para_num != 0)
-    {
-        FieldList paras = fun_symbol->type->u.function.paras;
-        while (paras != NULL)
-        {
-            Operand paraop = NULL;
-            if (paras->type->kind == ARRAY || paras->type->kind == STRUCTURE)
-                paraop = createOP(VARIABLE_OPERAND, ADDRESS_OPERAND, (char *)paras->name);
-            else
-                paraop = createOP(VARIABLE_OPERAND, VAR_OPERAND, (char *)paras->name);
-
-            ST_node query_paras = find_symbol(paras->name, __INT_MAX__);
-            if (query_paras == NULL)
-            {
-                printf("unsuccessful parameters query!\n");
-                assert(0);
-            }
-
-            query_paras->var_no = paraop->labelNum;
-
-            query_paras->ifaddress = paraop->address;
-            paraop->address = VAR_OPERAND;
-            newIntercode(PARAM_INTERCODE, paraop);
-            paras = paras->tail;
-        }
-    }
-
-    return 1;
-}
-
-int CompSt_gen(struct AST_Node *cur)
-{
-    struct AST_Node *temp = AST_getChild(cur, 1);
     if (strcmp(temp->name, "DefList") == 0)
     {
         DefList_gen(temp);
-        struct AST_Node *SL_node = AST_getChild(cur, 2);
-        if (strcmp(SL_node->name, "StmtList") == 0)
-        {
-            StmtList_gen(SL_node);
-        }
+        StmtList_gen(temp->next_sib);
     }
-    else if (strcmp(temp->name, "StmtList")==0)
-    {
+    else if (strcmp(temp->name, "StmtList")==0) //DefList is empty
         StmtList_gen(temp);
-    }
-    return 1;
+    
+    return;
 }
 
-int DefList_gen(struct AST_Node *cur)
+void StmtList_gen(struct AST_Node *cur_node)
 {
+    // StmtList -> Stmt StmtList
+    // | empty
 
-    if (cur == NULL)
-        return 1;
-    struct AST_Node *temp = AST_getChild(cur, 0);
-    if (temp != NULL)
-    {
-        struct AST_Node *D_node = temp;
-        struct AST_Node *DL_node = AST_getChild(cur, 1);
-        Def_gen(D_node);
-        if (DL_node != NULL)
-        {
-            DefList_gen(DL_node);
-        }
-    }
+    if(cur_node == NULL) return;
 
-    return 1;
+    Stmt_gen(cur_node->child);
+    StmtList_gen(cur_node->child->next_sib);
+
+    return;
 }
 
-int StmtList_gen(struct AST_Node *cur)
+void Stmt_gen(struct AST_Node *cur_node)
 {
-    if (cur == NULL)
-    {
-        return 1;
-    }
-    struct AST_Node *Stmt_node = AST_getChild(cur, 0);
-    if (Stmt_node != NULL)
-    {
-        if (strcmp(Stmt_node->name, "Stmt") == 0)
-        {
-            Stmt_gen(Stmt_node);
-            struct AST_Node *temp = AST_getChild(cur, 1);
-            if (temp != NULL)
-            {
-                StmtList_gen(temp);
-            }
-        }
-    }
+    // Stmt -> Exp SEMI
+    // | CompSt
+    // | RETURN Exp SEMI
+    // | WHILE LP Exp RP Stmt
+    // | IF LP Exp RP Stmt | IF LP Exp RP Stmt1 ELSE Stmt2
 
-    return 1;
-}
+    struct AST_Node *temp = cur_node->child;
+    if(strcmp(temp->name, "Exp") == 0)
+        Exp_gen(temp);
+    else if (strcmp(temp->name, "CompSt") == 0)
+        CompSt_gen(temp);
+    else if (strcmp(temp->name, "RETURN") == 0)
+    {
+        struct AST_Node *exp_node = temp->next_sib;
+        Operand exp_op = Exp_gen(exp_node);
+        newIntercode(RETURN_INTERCODE, exp_op);
+    }
+    else if (strcmp(temp->name, "WHILE") == 0)
+    {
+        //goto() optimization in WHILE
 
-int Stmt_gen(struct AST_Node *cur)
-{
-    struct AST_Node *temp1 = AST_getChild(cur, 0);
-    if (strcmp(temp1->name, "CompSt") == 0)
-    {
-        CompSt_gen(temp1);
-    }
-    else if (strcmp(temp1->name, "Exp") == 0)
-    {
-        Exp_gen(temp1);
-    }
-    else if (strcmp(temp1->name, "RETURN") == 0)
-    {
-        struct AST_Node *expnode = AST_getChild(cur, 1);
-        Operand expop = Exp_gen(expnode);
-        newIntercode(RETURN_INTERCODE, expop);
-    }
-    else if (strcmp(temp1->name, "WHILE") == 0)
-    {
+        //label1 = new_label()
+        //label2 = new_label()
+        //code1 = translate_Cond(Exp, label2, sym_table)
+        //code2 = translate_Stmt(Stmt, sym_table)
+        //return [LABEL label1] + code1 + code2 + [GOTO label1] + [LABEL label2]
+
+        struct AST_Node *exp_node = AST_getChild(cur_node, 2);
+        struct AST_Node *stmt_node = AST_getChild(cur_node, 4);
+
         Operand label1 = createOP(LABEL_OPERAND, VAR_OPERAND);
         Operand label2 = createOP(LABEL_OPERAND, VAR_OPERAND);
+
         newIntercode(LABEL_INTERCODE, label1);
-        struct AST_Node *exp_node = AST_getChild(cur, 2);
         Cond_gen(exp_node, NULL, label2);
-        struct AST_Node *stmt_node = AST_getChild(cur, 4);
         Stmt_gen(stmt_node);
         newIntercode(GOTO_INTERCODE, label1);
         newIntercode(LABEL_INTERCODE, label2);
     }
-    else if (strcmp(temp1->name, "IF") == 0)
+    else if (strcmp(temp->name, "IF") == 0)
     {
+        //goto() optimization in IF
+        
+        //label1 = new_label()
+        //label2 = new_label() (unuse in IF LP Exp RP Stmt)
+        //code1 = translate_Cond(Exp, label1, sym_table)
+        //code2 = translate_Stmt(Stmt1, sym_table)
+        //code3 = translate_Stmt(Stmt2, sym_table) (unuse in IF LP Exp RP Stmt)
+        //return code1 + code2 + [LABEL label1](false)
+        //return code1 + code2 + [GOTO label2] + [LABEL label1](false) + code3 + [LABEL label2]
+
+        struct AST_Node *exp_node = AST_getChild(cur_node, 2);
+        struct AST_Node *else_node = AST_getChild(cur_node, 5);
+
         Operand label1 = createOP(LABEL_OPERAND, VARIABLE_OPERAND);
-        struct AST_Node *exp_node = AST_getChild(cur, 2);
+
         Cond_gen(exp_node, NULL, label1);
-        struct AST_Node *stmt_node = AST_getChild(cur, 4);
-        Stmt_gen(stmt_node);
-        struct AST_Node *temp2 = AST_getChild(cur, 5);
-        if (temp2 == NULL)
-        {
+        Stmt_gen(AST_getChild(cur_node, 4));
+
+        if (else_node == NULL) //IF LP Exp RP Stmt
             newIntercode(LABEL_INTERCODE, label1);
-        }
-        else
+        else//IF LP Exp RP Stmt1 ELSE Stmt2
         {
-            Operand label2 = createOP(LABEL_OPERAND, VAR_OPERAND);
+            Operand label2 = createOP(LABEL_OPERAND, VARIABLE_OPERAND);
             newIntercode(GOTO_INTERCODE, label2);
             newIntercode(LABEL_INTERCODE, label1);
-            struct AST_Node *stmt_node2 = AST_getChild(cur, 6);
-            Stmt_gen(stmt_node2);
+            Stmt_gen(AST_getChild(cur_node, 6));
             newIntercode(LABEL_INTERCODE, label2);
         }
     }
-    return 1;
+    return;
 }
 
-int Def_gen(struct AST_Node *cur)
+void DefList_gen(struct AST_Node *cur_node)
 {
-    struct AST_Node *DL_node = AST_getChild(cur, 1);
-    DecList_gen(DL_node);
-
-    return 1;
-}
-
-int DecList_gen(struct AST_Node *cur)
-{
-    struct AST_Node *dec_node = AST_getChild(cur, 0);
-    Dec_gen(dec_node);
-    if (AST_getChild(cur, 1) != NULL)
+    //DefList -> Def DefList
+    // | (empty)
+    // Def -> Specifier DecList SEMI(merge)
+    if(cur_node==NULL) return;
+    struct AST_Node * Def_node = cur_node->child;
+    if (Def_node != NULL)
     {
-        struct AST_Node *DL_node = AST_getChild(cur, 2);
-        if (DL_node != NULL)
-        {
-            DecList_gen(DL_node);
-        }
+        DefList_gen(Def_node->child->next_sib);
+        DefList_gen(Def_node->next_sib);
     }
-
-    return 1;
+    return;
 }
 
-int Dec_gen(struct AST_Node *cur)
+void DecList_gen(struct AST_Node *cur_node)
 {
-    struct AST_Node *VD_node = AST_getChild(cur, 0);
-    if (AST_getChild(cur, 1) == NULL)
+    // 	DecList -> Dec
+    // | Dec COMMA DecList
+
+    Dec_gen(cur_node->child);
+    if (AST_getChild(cur_node, 1) != NULL)
+        DecList_gen(AST_getChild(cur_node, 2));
+
+    return;
+}
+
+void Dec_gen(struct AST_Node *cur_node)
+{
+    // Dec -> VarDec
+    // | VarDec ASSIGNOP Exp
+    
+    Operand op1 = VarDec_gen(cur_node->child);
+    if (AST_getChild(cur_node, 1) != NULL)
     {
-        VarDec_gen(VD_node);
-    }
-    else
-    {
-        Operand op1 = VarDec_gen(VD_node);
-        Operand op2 = Exp_gen(AST_getChild(cur, 2));
+        Operand op2 = Exp_gen(AST_getChild(cur_node, 2));
         newIntercode(ASSIGN_INTERCODE, op1, op2);
     }
 
-    return 1;
+    return;
 }
 
-Operand VarDec_gen(struct AST_Node *cur)
+Operand VarDec_gen(struct AST_Node *cur_node)
 {
+    // VarDec -> ID
+	// | VarDec LB INT RB
 
     Operand result = NULL;
-    if (cur == NULL)
+
+    struct AST_Node *ID_node = cur_node->child;
+    while(strcmp(ID_node->name, "ID") != 0)
+        ID_node = ID_node->child;
+    
+    ST_node my_id = find_symbol(ID_node->is_string, __INT_MAX__);
+    result = createOP(VARIABLE_OPERAND, VAR_OPERAND, ID_node->is_string);
+    my_id->ifaddress = VAR_OPERAND;
+    my_id->var_no = result->labelNum;
+    int typesize = typeSize(my_id->type);
+    if (typeSize(my_id->type) != 4)//结构体与数组情况，需要分配空间。
     {
-        assert(0);
-        return NULL;
-    }
-
-    struct AST_Node *ID_node = AST_getChild(cur, 0);
-    if (strcmp(ID_node->name, "ID") == 0)
-    {
-        ST_node my_id = find_symbol(ID_node->is_string, __INT_MAX__);
-
-        int typesize = typeSize(my_id->type);
-        result = createOP(VARIABLE_OPERAND, VAR_OPERAND, ID_node->is_string);
-        my_id->ifaddress = result->address;
-        my_id->var_no = result->labelNum;
-        if (typesize != 4)
-        {
-            Operand op = createOP(CONSTANT_OPERAND, VAR_OPERAND, typesize);
-            newIntercode(DEC_INTERCODE, result, op);
-        }
-    }
-    else
-    {
-
-        struct AST_Node *find_node = AST_getChild(ID_node, 0);
-        while (strcmp(find_node->name, "ID"))
-            find_node = find_node->child;
-
-        ST_node my_id = find_symbol(find_node->is_string, __INT_MAX__);
-
-        result = createOP(VARIABLE_OPERAND, VAR_OPERAND, find_node->is_string);
-        my_id->ifaddress = result->address;
-        my_id->var_no = result->labelNum;
-        int arraysize = typeSize(my_id->type);
-        Operand op = createOP(CONSTANT_OPERAND, VAR_OPERAND, arraysize);
+        Operand op = createOP(CONSTANT_OPERAND, VAR_OPERAND, typesize);
         newIntercode(DEC_INTERCODE, result, op);
     }
 
     return result;
 }
 
-int getarraydepth(ST_node arr_node)
+void FunDec_gen(struct AST_Node *cur_node)
 {
-    int cnt = 0;
-    Type temp = arr_node->type;
+    // FunDec -> ID LP Args RP
+    // | ID LP RP
 
-    while (temp->kind == ARRAY)
+    struct AST_Node *ID_node = cur_node->child;
+    Operand func_op = createOP(FUNCTION_OPERAND, VAR_OPERAND, ID_node->is_string);
+    newIntercode(FUNCTION_INTERCODE, func_op);
+
+    ST_node func_symbol = find_symbol(func_op->funcName, __INT_MAX__);
+    int para_num = func_symbol->type->u.function.para_num;
+    if (para_num != 0)
     {
-        cnt += 1;
-        temp = temp->u.array.elem;
+        FieldList paras = func_symbol->type->u.function.paras;
+        while (paras != NULL)
+        {
+            Operand paraop = NULL;
+            if (paras->type->kind == ARRAY || paras->type->kind == STRUCTURE)
+                paraop = createOP(VARIABLE_OPERAND, ADDRESS_OPERAND, (char* )paras->name);
+            else
+                paraop = createOP(VARIABLE_OPERAND, VAR_OPERAND, (char* )paras->name);
+
+            ST_node query_paras = find_symbol(paras->name, __INT_MAX__);
+            query_paras->var_no = paraop->labelNum;
+            query_paras->ifaddress = paraop->address;
+            newIntercode(PARAM_INTERCODE, paraop);
+            paras = paras->tail;
+        }
     }
-    return cnt;
+
+    return;
 }
 
-int Arg_gen(struct AST_Node *cur, FieldList para)
+void Arg_gen(struct AST_Node *cur_node, FieldList para)
 {
-    if (cur == NULL || para == NULL)
-        return 0;
+    // Args -> Exp COMMA Args
+	// | Exp
 
-    Operand temp_op = Exp_gen(AST_getChild(cur, 0));
-    Operand op = copyOP(temp_op);
-    op->address = !op->address;
+    Operand temp_op = Exp_gen(cur_node->child);
+    Operand exp_op = copyOP(temp_op);
 
     if (para->type->kind == STRUCTURE || para->type->kind == ARRAY)
     {
-        int flag = 0;
+        int arraydepth = 0;
         if (para->type->kind == ARRAY)
         {
-            char *name = op->varName;
-            ST_node ARR_node = find_symbol(name, __INT_MAX__);
-            int arraydepth = getarraydepth(ARR_node);
-            if (op->depth < arraydepth)
-                flag = 1;
-            if (op->depth == 0)
-                flag = 0;
+            ST_node ARR_node = find_symbol(exp_op->varName, __INT_MAX__);
+            arraydepth = getarraydepth(ARR_node);
         }
-        if (flag == 1)
-        {
-            op->address = VAR_OPERAND;
-        }
-        else if (op->address == ADDRESS_OPERAND)
-            op->address = VAR_OPERAND;
+        if ((exp_op->depth < arraydepth && exp_op->depth!=0) || exp_op->address == ADDRESS_OPERAND)
+            exp_op->address = VAR_OPERAND;
         else
-            op->address = ADDRESS_OPERAND;
+            exp_op->address = ADDRESS_OPERAND;
     }
 
-    if (AST_getChild(cur, 1) != NULL)
-        Arg_gen(AST_getChild(cur, 2), para->tail);
+    if (AST_getChild(cur_node, 1) != NULL)
+        Arg_gen(AST_getChild(cur_node, 2), para->tail);
     
-    newIntercode(ARG_INTERCODE, op);
-    return 1;
+    newIntercode(ARG_INTERCODE, exp_op);
+    return;
 }
 
-Operand Exp_gen(struct AST_Node *cur){
-	if(AST_getChild(cur, 0)==NULL)
-        return NULL;
+Operand Exp_ID(struct AST_Node *cur_node)
+{
+    Operand ret_op = NULL;
+    struct AST_Node* ID = cur_node->child;
+    struct AST_Node* LP = ID->next_sib;
+    if(LP == NULL)
+    {
+        ST_node ID_node = find_symbol(ID->is_string, __INT_MAX__);
+        ret_op=createOP(VARIABLE_OPERAND,ID_node->ifaddress,ID->is_string);
+        varCount--;
+        ret_op->labelNum=ID_node->var_no;
+        ret_op->depth=0;
+        return ret_op;
+    }else
+    {
+        struct AST_Node* Args = LP->next_sib;
+        if(strcmp(Args->name,"Args")==0)
+        {
+            if(strcmp(ID->is_string,"write")==0){
+                struct AST_Node* output_node=Args->child;
+                Operand output=NULL;
+                if(strcmp(output_node->name,"Exp")==0)
+                    output=Exp_gen(output_node);
+                newIntercode(WRITE_INTERCODE, output);
+                ret_op=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
+                newIntercode(ASSIGN_INTERCODE,ret_op,createOP(CONSTANT_OPERAND,VAR_OPERAND,0));
 
-    Operand ret_op=NULL;
-    struct AST_Node* my_node1 = AST_getChild(cur, 0);
-	if(strcmp(my_node1->name,"ID") == 0){
-		struct AST_Node* my_node2 = AST_getChild(cur, 1);
-		if(my_node2==NULL){
-            ST_node ID_node = find_symbol(my_node1->is_string, __INT_MAX__);
-			
-			if(ID_node->type->kind==ARRAY||ID_node->type->kind==STRUCTURE){
+                return ret_op;
+            }else{
+                Operand functionname=createOP(FUNCTION_OPERAND,VAR_OPERAND,ID->is_string);
+                ST_node id_node=find_symbol(ID->is_string, __INT_MAX__);
+                Arg_gen(Args,id_node->type->u.function.paras);
+                newIntercode(CALL_INTERCODE,ret_op,functionname);
+                return ret_op;
+            }
+        }else{ // Args = RP        
+            ret_op=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
+            if(strcmp(ID->is_string,"read")==0){
+                newIntercode(READ_INTERCODE,ret_op);
+                return ret_op;
+            }
+            Operand functionname=createOP(FUNCTION_OPERAND,VAR_OPERAND,ID->is_string);
+            newIntercode(CALL_INTERCODE,ret_op,functionname);
+            return ret_op;
+        }
+    }
+}
 
-				if(ID_node->ifaddress==ADDRESS_OPERAND)
-					ret_op=createOP(VARIABLE_OPERAND,ADDRESS_OPERAND,my_node1->is_string);
-				else
-					ret_op=createOP(VARIABLE_OPERAND,VAR_OPERAND,my_node1->is_string);
-				varCount--;
-				ret_op->labelNum=ID_node->var_no;
-				if(ID_node->var_no==-1)assert(0);
-				ret_op->depth=0;
-				return ret_op;
-			}else{
-				ret_op=createOP(VARIABLE_OPERAND,VAR_OPERAND,my_node1->is_string);
-				varCount--;
-				ret_op->labelNum=ID_node->var_no;
-				if(ID_node->var_no==-1)assert(0);
-				ret_op->depth=0;
-				return ret_op;
-			}
-		}else{
-			struct AST_Node* my_node3=AST_getChild(cur,2);
+Operand Exp_Exp(struct AST_Node *cur_node){
+    Operand ret_op = NULL;
+    struct AST_Node* Exp1 = cur_node->child;
+    struct AST_Node* OP_node = Exp1->next_sib;
+    struct AST_Node* Exp2 = OP_node->next_sib;
+    if(
+        (strcmp(OP_node->name,"PLUS")==0)||
+        (strcmp(OP_node->name,"MINUS")==0)||
+        (strcmp(OP_node->name,"STAR")==0)||
+        (strcmp(OP_node->name,"DIV")==0)
+    ){
+        int in_kind=arithKind(OP_node->name);
+        ret_op=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
+        Operand op1=Exp_gen(Exp1);
+        Operand op2=Exp_gen(Exp2);
+        newIntercode(in_kind,ret_op,op1,op2);
+        
+        return ret_op;
+    }
+    else if(strcmp(OP_node->name,"ASSIGNOP")==0){
+            Operand op1=Exp_gen(Exp1);
+            Operand op2=Exp_gen(Exp2);
+            int flag=0;
+            ST_node queryid1=find_symbol(op1->varName,__INT_MAX__);
+            ST_node queryid2=find_symbol(op2->varName,__INT_MAX__);
+            if(op1->varName!=NULL&&op2->varName!=NULL){
+                if(queryid1->type->kind==ARRAY&&queryid2->type->kind==ARRAY)
+                    if(op1->address==VAR_OPERAND&&op2->address==VAR_OPERAND)
+                        flag=1;
+            }
+            if(flag==1)
+            {
+                int depth1=op1->depth;
+                int depth2=op2->depth;
 
-			if(strcmp(my_node1->is_string,"write")==0){
-				if(strcmp(my_node3->name,"Args") == 0){
-					struct AST_Node* my_node31=AST_getChild(my_node3,0);
-					Operand op_temp=NULL;
-					if(strcmp(my_node31->name,"Exp")==0){
-						op_temp=Exp_gen(my_node31);
-					}
-					if(op_temp!=NULL)
-					    newIntercode(WRITE_INTERCODE, op_temp);
-					Operand constant_op=createOP(CONSTANT_OPERAND,VAR_OPERAND,0);
-					ret_op=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
-					newIntercode(ASSIGN_INTERCODE,ret_op,constant_op);
+                int typesize2=typeSize(queryid2->type);
+                Operand constantop2=createOP(CONSTANT_OPERAND,VAR_OPERAND,typesize2);
+                Operand four=createOP(CONSTANT_OPERAND,VAR_OPERAND,4);
+                Operand v1=copyOP(op1);
+                if(v1->kind==VARIABLE_OPERAND)
+                    v1->address=ADDRESS_OPERAND;
+                Operand v2=copyOP(op2);
+                if(v2->kind==VARIABLE_OPERAND)
+                    v2->address=ADDRESS_OPERAND;
+                Operand t1op=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
+                newIntercode(ASSIGN_INTERCODE,t1op,v1);
+                
+                Operand t2op=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
+                newIntercode(ASSIGN_INTERCODE,t2op,v2);			
+                
+                Operand oriop=createOP(VARIABLE_OPERAND,ADDRESS_OPERAND,op2->varName);
+                oriop->labelNum=queryid2->var_no;
 
-					return ret_op;
-				}
-			}
+                varCount-=1;
+                Operand endop=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
+                newIntercode(ADD_INTERCODE,endop,oriop,constantop2);
 
-			ret_op=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
-			if(strcmp(my_node1->is_string,"read")==0){
-				newIntercode(READ_INTERCODE,ret_op);
-				return ret_op;
-			}
+                Operand labelop1=createOP(LABEL_OPERAND,VAR_OPERAND);
+                Operand labelop2=createOP(LABEL_OPERAND,VAR_OPERAND);
 
-			Operand functionname=createOP(FUNCTION_OPERAND,VAR_OPERAND,my_node1->is_string);
-			if(strcmp(my_node3->name,"RP") == 0){
-				newIntercode(CALL_INTERCODE,ret_op,functionname);
-				return ret_op;
-			}else if(strcmp(my_node3->name,"Args")==0){
-				ST_node id_node=find_symbol(my_node1->is_string, __INT_MAX__);
-				Arg_gen(my_node3,id_node->type->u.function.paras);
-				newIntercode(CALL_INTERCODE,ret_op,functionname);
-				return ret_op;
-			}
-			return ret_op;
-		}
-	}else if(strcmp(my_node1->name,"INT")==0){
-		ret_op=createOP(CONSTANT_OPERAND,VAR_OPERAND,my_node1->is_int);
-		return ret_op;
+                newIntercode(LABEL_INTERCODE,labelop1);
+                newIntercode(IFGOTO_INTERCODE,t2op,">=",endop,labelop2);
+                Operand tempt1op=copyOP(t1op);
+                Operand tempt2op=copyOP(t2op);
+                tempt1op->address=ADDRESS_OPERAND;
+                tempt2op->address=ADDRESS_OPERAND;
+                newIntercode(ASSIGN_INTERCODE,tempt1op,tempt2op);
+                newIntercode(ADD_INTERCODE,t1op,t1op,four);
+                newIntercode(ADD_INTERCODE,t2op,t2op,four);
 
-	}else if(strcmp(my_node1->name,"FLOAT") == 0){
-		ret_op=createOP(CONSTANT_OPERAND,VAR_OPERAND,0);
-		return ret_op;	
-		
-	}else if(strcmp(my_node1->name,"LP") == 0){
-		struct AST_Node* exp_node=AST_getChild(cur,1);
-		return Exp_gen(exp_node);
-	}else if(strcmp(my_node1->name,"MINUS")==0){
-		Operand zero=createOP(CONSTANT_OPERAND,VAR_OPERAND,0);
-		struct AST_Node* exp_node=AST_getChild(cur,1);
-		Operand op1=Exp_gen(exp_node);
+                newIntercode(GOTO_INTERCODE,labelop1);
+                newIntercode(LABEL_INTERCODE,labelop2);
+
+
+            }else if(op1!=NULL&&op2!=NULL)
+                newIntercode(ASSIGN_INTERCODE,op1,op2);
+        return op1;
+    }
+    else if(strcmp(OP_node->name,"DOT")==0){
+        Operand exp_op=Exp_gen(Exp1);
+        Operand temp_expop=copyOP(exp_op);
+        ST_node queryid=find_symbol(Exp2->is_string,__INT_MAX__);
+        int offset=queryid->offset;
+
+        Operand ttemp=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
+        temp_expop->address = !temp_expop->address;
+        if(offset==0)
+            newIntercode(ASSIGN_INTERCODE,ttemp,temp_expop);
+        else{
+            Operand constantop=createOP(CONSTANT_OPERAND,VAR_OPERAND,offset);
+            newIntercode(ADD_INTERCODE,ttemp,temp_expop,constantop);
+        }
+        ret_op=copyOP(ttemp);
+        ret_op->address=ADDRESS_OPERAND;
+        ret_op->varName=Exp2->is_string;
+        return ret_op;
+    }
+    else if(strcmp(OP_node->name,"LB")==0){
+        Operand exp_op1=copyOP(Exp_gen(Exp1));
+        int depth=exp_op1->depth;
+
+        ST_node arr_node=find_symbol(exp_op1->varName,__INT_MAX__);
+        Type ttemptype=arr_node->type;
+        Type temptype=ttemptype;
+        int cnt=0;
+        while(temptype->kind==ARRAY){
+            cnt+=1;
+            temptype=temptype->u.array.elem;
+        }
+        int typesize=typeSize(temptype);
+        int*arraysize=(int* )malloc(sizeof(int)*(cnt+1));
+        cnt=0;
+        temptype=ttemptype;
+        while(temptype->kind==ARRAY){
+            arraysize[cnt]=temptype->u.array.size;
+            cnt+=1;
+            temptype=temptype->u.array.elem;
+        }
+        int ptr=cnt-1;
+        int tempdepth=cnt-depth-1;
+        int offset=1;
+        while(tempdepth){
+            offset*=arraysize[ptr];
+            tempdepth-=1;
+            ptr-=1;
+        }
+        free(arraysize);
+        offset=offset*typesize;
+
+        struct AST_Node* index_node=OP_node->next_sib;
+        Operand expop2=Exp_gen(index_node);
+        
+        Operand tempop1=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
+        Operand constantop1=createOP(CONSTANT_OPERAND,VAR_OPERAND,offset);
+        newIntercode(MUL_INTERCODE,tempop1,expop2,constantop1);
+
+        Operand tempop2=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
+        tempop2->varName=exp_op1->varName;
+        tempop2->depth=depth+1;
+        if(depth==0&&exp_op1->address==VAR_OPERAND){
+            exp_op1->address=ADDRESS_OPERAND;
+        }else{
+            exp_op1->address=VAR_OPERAND;
+        }
+        newIntercode(ADD_INTERCODE,tempop2,exp_op1,tempop1);
+
+        ret_op=copyOP(tempop2);
+        if(tempop2->depth==cnt)
+            ret_op->address=ADDRESS_OPERAND;
+        return ret_op;
+    }
+}
+
+Operand Exp_gen(struct AST_Node *cur_node){
+
+    struct AST_Node* case_node = cur_node->child;
+    if(strcmp(case_node->name,"INT")==0)
+        return createOP(CONSTANT_OPERAND,VAR_OPERAND,case_node->is_int);
+    else if(strcmp(case_node->name,"LP")==0)
+        return Exp_gen(AST_getChild(cur_node,1));
+    else if(strcmp(case_node->name,"MINUS")==0){
+		Operand op1=Exp_gen(case_node->next_sib);
+        Operand zero=createOP(CONSTANT_OPERAND,VAR_OPERAND,0);
 		Operand op2=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
 		newIntercode(SUB_INTERCODE, op2, zero, op1);
-		ret_op=op2;
-		return ret_op;
-	}else if(strcmp(my_node1->name,"NOT")==0||
-		(strcmp(my_node1->name,"Exp")==0&&my_node1->next_sib!=NULL&&strcmp(my_node1->next_sib->name,"RELOP")==0)||
-		(strcmp(my_node1->name,"Exp")==0&&my_node1->next_sib!=NULL&&strcmp(my_node1->next_sib->name,"AND")==0)||
-		(strcmp(my_node1->name,"Exp")==0&&my_node1->next_sib!=NULL&&strcmp(my_node1->next_sib->name,"OR")==0)
-	){
+        return op2;
+    }
+    else if(strcmp(case_node->name,"NOT")==0||
+		(strcmp(case_node->name,"Exp")==0&&case_node->next_sib!=NULL&&
+            (strcmp(case_node->next_sib->name,"RELOP")==0 
+            ||strcmp(case_node->next_sib->name,"AND")==0
+            ||strcmp(case_node->next_sib->name,"OR")==0)))
+	{
 		Operand label1=createOP(LABEL_OPERAND, VAR_OPERAND);
 		Operand label2=createOP(LABEL_OPERAND, VAR_OPERAND);
-		ret_op=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
-		Operand zero=createOP(CONSTANT_OPERAND,VAR_OPERAND,0);
-		newIntercode(ASSIGN_INTERCODE,ret_op,zero);
-		Cond_gen(cur,label1,label2);
+
+		Operand ret_op=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
+		newIntercode(ASSIGN_INTERCODE,ret_op,createOP(CONSTANT_OPERAND,VAR_OPERAND,0));
+		Cond_gen(cur_node,label1,label2);
 		newIntercode(LABEL_INTERCODE,label1);
-		Operand one=createOP(CONSTANT_OPERAND,VAR_OPERAND,1);
-		newIntercode(ASSIGN_INTERCODE,ret_op,one);
+		newIntercode(ASSIGN_INTERCODE,ret_op,createOP(CONSTANT_OPERAND,VAR_OPERAND,1));
 		newIntercode(LABEL_INTERCODE,label2);
 		return ret_op;
-
-	}else if(strcmp(my_node1->name,"Exp")==0){
-		
-		struct AST_Node* my_node2=AST_getChild(cur,1);
-		if(
-				(strcmp(my_node2->name,"PLUS")==0)||
-				(strcmp(my_node2->name,"MINUS")==0)||
-				(strcmp(my_node2->name,"STAR")==0)||
-				(strcmp(my_node2->name,"DIV")==0)
-			){
-				int in_kind=arithKind(my_node2->name);
-				ret_op=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
-				struct AST_Node*exp_node1=my_node1;
-				struct AST_Node*exp_node2=AST_getChild(cur,2);
-				Operand op1=Exp_gen(exp_node1);
-				Operand op2=Exp_gen(exp_node2);
-				if(op1!=NULL&&op2!=NULL)
-				    newIntercode(in_kind,ret_op,op1,op2);
-                
-				return ret_op;
-			}
-		else if(strcmp(my_node2->name,"ASSIGNOP")==0){
-				struct AST_Node*exp_node1=my_node1;
-				struct AST_Node*exp_node2=AST_getChild(cur,2);
-				Operand op1=Exp_gen(exp_node1);
-				Operand op2=Exp_gen(exp_node2);
-
-				int flag=0;
-				if(op1->varName!=NULL&&op2->varName!=NULL){
-					ST_node queryid1=find_symbol(op1->varName,__INT_MAX__);
-					ST_node queryid2=find_symbol(op2->varName,__INT_MAX__);
-					if(queryid1->type->kind==ARRAY&&queryid2->type->kind==ARRAY)
-						if(op1->address==VAR_OPERAND&&op2->address==VAR_OPERAND)
-							flag=1;
-				}
-				if(flag==1)
-				{
-					ST_node queryid1=find_symbol(op1->varName,__INT_MAX__);
-					ST_node queryid2=find_symbol(op2->varName,__INT_MAX__);
-
-					int depth1=op1->depth;
-					int depth2=op2->depth;
-
-					int typesize2=typeSize(queryid2->type);
-					Operand constantop2=createOP(CONSTANT_OPERAND,VAR_OPERAND,typesize2);
-					Operand four=createOP(CONSTANT_OPERAND,VAR_OPERAND,4);
-					Operand v1=copyOP(op1);
-					if(v1->kind==VARIABLE_OPERAND){
-						v1->address=ADDRESS_OPERAND;
-					}
-					Operand v2=copyOP(op2);
-					if(v2->kind==VARIABLE_OPERAND){
-						v2->address=ADDRESS_OPERAND;
-					}
-					Operand t1op=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
-					newIntercode(ASSIGN_INTERCODE,t1op,v1);
-					
-					Operand t2op=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
-					newIntercode(ASSIGN_INTERCODE,t2op,v2);			
-					
-					Operand oriop=createOP(VARIABLE_OPERAND,ADDRESS_OPERAND,op2->varName);
-					oriop->labelNum=queryid2->var_no;
-
-					varCount-=1;
-					Operand endop=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
-					newIntercode(ADD_INTERCODE,endop,oriop,constantop2);
-
-					Operand labelop1=createOP(LABEL_OPERAND,VAR_OPERAND);
-					Operand labelop2=createOP(LABEL_OPERAND,VAR_OPERAND);
-
-					newIntercode(LABEL_INTERCODE,labelop1);
-					newIntercode(IFGOTO_INTERCODE,t2op,">=",endop,labelop2);
-					Operand tempt1op=copyOP(t1op);
-					Operand tempt2op=copyOP(t2op);
-					tempt1op->address=ADDRESS_OPERAND;
-					tempt2op->address=ADDRESS_OPERAND;
-					newIntercode(ASSIGN_INTERCODE,tempt1op,tempt2op);
-					newIntercode(ADD_INTERCODE,t1op,t1op,four);
-					newIntercode(ADD_INTERCODE,t2op,t2op,four);
-
-					newIntercode(GOTO_INTERCODE,labelop1);
-					newIntercode(LABEL_INTERCODE,labelop2);
-
-
-				}else if(op1!=NULL&&op2!=NULL)
-				    newIntercode(ASSIGN_INTERCODE,op1,op2);
-			
-				ret_op=op1;
-				return ret_op;
-		}
-		else if(strcmp(my_node2->name,"DOT")==0){
-			Operand exp_op=Exp_gen(my_node1);
-			Operand temp_expop=copyOP(exp_op);
-			struct AST_Node* my_node3=AST_getChild(cur,2);
-			int queryok=0;
-			ST_node queryid=find_symbol(my_node3->is_string,__INT_MAX__);
-			int offset=queryid->offset;
-
-			if(offset==0){
-				Operand ttemp=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
-				if(temp_expop->address==ADDRESS_OPERAND)
-				    temp_expop->address=VAR_OPERAND;
-				else
-					temp_expop->address=ADDRESS_OPERAND;
-				newIntercode(ASSIGN_INTERCODE,ttemp,temp_expop);
-				ret_op=copyOP(ttemp);
-				ret_op->address=ADDRESS_OPERAND;
-				ret_op->varName=my_node3->is_string;
-				return ret_op;
-			}else{
-				Operand constantop=createOP(CONSTANT_OPERAND,VAR_OPERAND,offset);
-				Operand ttemp=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
-
-				if(temp_expop->address==ADDRESS_OPERAND)
-				temp_expop->address=VAR_OPERAND;
-				else{
-					temp_expop->address=ADDRESS_OPERAND;
-				}
-
-				newIntercode(ADD_INTERCODE,ttemp,temp_expop,constantop);
-				ret_op=copyOP(ttemp);
-				ret_op->address=ADDRESS_OPERAND;
-				ret_op->varName=my_node3->is_string;
-				return ret_op;
-			}
-			
-		}
-		else if(strcmp(my_node2->name,"LB")==0){
-			Operand expop1=copyOP(Exp_gen(my_node1));
-			int depth=expop1->depth;
-
-			ST_node queryid=find_symbol(expop1->varName,__INT_MAX__);
-			Type ttemptype=queryid->type;
-			Type temptype=ttemptype;
-			int cnt=0;
-			while(temptype->kind==ARRAY){
-				cnt+=1;
-				temptype=temptype->u.array.elem;
-			}
-			int typesize=typeSize(temptype);
-			int*arraysize=(int* )malloc(sizeof(int)*(cnt+1));
-			cnt=0;
-			temptype=ttemptype;
-			while(temptype->kind==ARRAY){
-				arraysize[cnt]=temptype->u.array.size;
-				cnt+=1;
-				temptype=temptype->u.array.elem;
-			}
-			int ptr=cnt-1;
-			int tempdepth=cnt-depth-1;
-			int offset=1;
-			while(tempdepth){
-				offset*=arraysize[ptr];
-				tempdepth-=1;
-				ptr-=1;
-			}
-			free(arraysize);
-			offset=offset*typesize;
-
-			struct AST_Node*tempnode3=AST_getChild(cur,2);
-			Operand expop2=Exp_gen(tempnode3);
-			
-			Operand tempop1=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
-			Operand constantop1=createOP(CONSTANT_OPERAND,VAR_OPERAND,offset);
-			newIntercode(MUL_INTERCODE,tempop1,expop2,constantop1);
-
-			Operand tempop2=createOP(TEMPVAR_OPERAND,VAR_OPERAND);
-			tempop2->varName=expop1->varName;
-			tempop2->depth=depth+1;
-			if(depth==0&&expop1->address==VAR_OPERAND){
-				expop1->address=ADDRESS_OPERAND;
-			}else{
-				expop1->address=VAR_OPERAND;
-			}
-			newIntercode(ADD_INTERCODE,tempop2,expop1,tempop1);
-
-			ret_op=copyOP(tempop2);
-			if(tempop2->depth==cnt){
-				ret_op->address=ADDRESS_OPERAND;
-			}
-			return ret_op;
-		}
 	}
-	return ret_op;
+    else if(strcmp(case_node->name,"ID") == 0)
+        return Exp_ID(cur_node);
+    else if(strcmp(case_node->name,"Exp") == 0)
+        return Exp_Exp(cur_node);
 }
 
-int Cond_gen(struct AST_Node* cur,Operand label_true,Operand label_false){
+void Cond_gen(struct AST_Node* cur_node,Operand label_true,Operand label_false){
 	Operand zero=createOP(CONSTANT_OPERAND,VAR_OPERAND,0);
 
-	if(cur!=NULL)
-    {
-		struct AST_Node* my_node1=AST_getChild(cur,0);
-		if(strcmp(my_node1->name,"Exp")==0){
-			struct AST_Node* my_node2=AST_getChild(cur,1);
-			if(strcmp(my_node2->name,"ASSIGNOP")==0){
-				Operand op1=Exp_gen(my_node1);
-				struct AST_Node* my_node3 = AST_getChild(cur,2);
-				Operand op2=Exp_gen(my_node3);
-				newIntercode(ASSIGN_INTERCODE,op1,op2);
-				if(label_true!=NULL&&label_false!=NULL){
-					if(op1!=NULL)
-					newIntercode(IFGOTO_INTERCODE,op1,"!=",zero,label_true);
-					newIntercode(GOTO_INTERCODE,label_false);
-				}else if(label_true!=NULL){
-					if(op1!=NULL)
-					newIntercode(IFGOTO_INTERCODE,op1,"!=",zero,label_true);
-				}else if(label_false!=NULL){
-					if(op1!=NULL)
-					newIntercode(IFGOTO_INTERCODE,op1,"==",zero,label_false);
-				}
+    struct AST_Node* case_node=cur_node->child;
+    if(strcmp(case_node->name,"Exp")==0){
+        struct AST_Node* Exp1=cur_node->child;
+        struct AST_Node* OP_node=case_node->next_sib;
+        if(strcmp(OP_node->name,"ASSIGNOP")==0){
+            struct AST_Node* Exp2 = OP_node->next_sib;
+            Operand op1=Exp_gen(Exp1);
+            Operand op2=Exp_gen(Exp2);
+            newIntercode(ASSIGN_INTERCODE,op1,op2);
+            if(label_true!=NULL&&label_false!=NULL){
+                if(op1!=NULL)
+                    newIntercode(IFGOTO_INTERCODE,op1,"!=",zero,label_true);
+                newIntercode(GOTO_INTERCODE,label_false);
+            }else if(label_true!=NULL){
+                if(op1!=NULL)
+                    newIntercode(IFGOTO_INTERCODE,op1,"!=",zero,label_true);
+            }else if(label_false!=NULL){
+                if(op1!=NULL)
+                    newIntercode(IFGOTO_INTERCODE,op1,"==",zero,label_false);
+            }
 
-			}else if(strcmp(my_node2->name,"AND")==0){
-				if(label_false!=NULL){
-					Cond_gen(my_node1,NULL,label_false);
-					struct AST_Node* my_node3 = AST_getChild(cur,2);
-					Cond_gen(my_node3,label_true,label_false);		
-				}else{
-					Operand new_label=createOP(LABEL_OPERAND,VAR_OPERAND);
-					Cond_gen(my_node1,NULL,new_label);
-					struct AST_Node* my_node3 = AST_getChild(cur,2);
-					Cond_gen(my_node3,label_true,label_false);
-					newIntercode(LABEL_INTERCODE,new_label);
-				}	
-			}else if(strcmp(my_node2->name,"OR")==0){
-				if(label_true!=NULL){
-					Cond_gen(my_node1,label_true,NULL);
-					struct AST_Node* my_node3 = AST_getChild(cur,2);
-					Cond_gen(my_node3,label_true,label_false);
-				}else{
-					Operand new_label=createOP(LABEL_OPERAND,VAR_OPERAND);
-					Cond_gen(my_node1,new_label,NULL);
-					struct AST_Node* my_node3 = AST_getChild(cur,2);
-					Cond_gen(my_node3,label_true,label_false);
-					newIntercode(LABEL_INTERCODE,new_label);			
-				}
-			}else if(strcmp(my_node2->name,"RELOP")==0){
-				Operand op1=Exp_gen(my_node1);
-				struct AST_Node* my_node3 = AST_getChild(cur,2);
-				Operand op2=Exp_gen(my_node3);
+        }else if(strcmp(OP_node->name,"AND")==0){
+            struct AST_Node* Exp2 = OP_node->next_sib;
+            if(label_false!=NULL){
+                Cond_gen(Exp1,NULL,label_false);
+                Cond_gen(Exp2,label_true,label_false);		
+            }else{
+                Operand new_label=createOP(LABEL_OPERAND,VAR_OPERAND);
+                Cond_gen(Exp1,NULL,new_label);
+                Cond_gen(Exp2,label_true,label_false);
+                newIntercode(LABEL_INTERCODE,new_label);
+            }	
+        }else if(strcmp(OP_node->name,"OR")==0){
+            struct AST_Node* Exp2 = OP_node->next_sib;
+            if(label_true!=NULL){
+                Cond_gen(Exp1,label_true,NULL);
+                Cond_gen(Exp2,label_true,label_false);
+            }else{
+                Operand new_label=createOP(LABEL_OPERAND,VAR_OPERAND);
+                Cond_gen(Exp1,new_label,NULL);
+                Cond_gen(Exp2,label_true,label_false);
+                newIntercode(LABEL_INTERCODE,new_label);			
+            }
+        }else if(strcmp(OP_node->name,"RELOP")==0){
+            Operand op1=Exp_gen(Exp1);
+            Operand op2=Exp_gen(OP_node->next_sib);
 
-				if(label_true!=NULL&&label_false!=NULL){
-					if(op1!=NULL)
-					newIntercode(IFGOTO_INTERCODE,op1,my_node2->is_string,op2,label_true);
-					newIntercode(GOTO_INTERCODE,label_false);
-				}else if(label_true!=NULL){
-					if(op1!=NULL)
-					newIntercode(IFGOTO_INTERCODE,op1,my_node2->is_string,op2,label_true);					
-				}else if(label_false!=NULL){
-					if(op1!=NULL)
-					newIntercode(IFGOTO_INTERCODE,op1,notRelop(my_node2->is_string),op2,label_false);
-				}
+            if(label_true!=NULL&&label_false!=NULL){
+                if(op1!=NULL)
+                newIntercode(IFGOTO_INTERCODE,op1,OP_node->is_string,op2,label_true);
+                newIntercode(GOTO_INTERCODE,label_false);
+            }else if(label_true!=NULL){
+                if(op1!=NULL)
+                newIntercode(IFGOTO_INTERCODE,op1,OP_node->is_string,op2,label_true);					
+            }else if(label_false!=NULL){
+                if(op1!=NULL)
+                newIntercode(IFGOTO_INTERCODE,op1,notRelop(OP_node->is_string),op2,label_false);
+            }
 
-			}else if(strcmp(my_node2->name,"PLUS") == 0||strcmp(my_node2->name,"DIV")==0||strcmp(my_node2->name,"STAR")==0||strcmp(my_node2->name,"MINUS")==0){
-				Operand op1=Exp_gen(my_node1);
-				struct AST_Node* my_node3 = AST_getChild(cur,2);
-				Operand op2=Exp_gen(my_node3);
-				
-				int in_kind=arithKind(my_node2->name);
-				Operand result=createOP(TEMPVAR_OPERAND,VAR_OPERAND);		
-				if(op1!=NULL&&op2!=NULL)
-					newIntercode(in_kind,result,op1,op2);
-				
-				if(label_true!=NULL&&label_false!=NULL){
-					newIntercode(IFGOTO_INTERCODE,result,"!=",zero,label_true);
-					newIntercode(GOTO_INTERCODE,label_false);
-				}
-				else if(label_true!=NULL){
-					newIntercode(IFGOTO_INTERCODE,result,"!=",zero,label_true);
-				}
-				else if(label_false!=NULL){
-					newIntercode(IFGOTO_INTERCODE,result,"==",zero,label_false);
-				}
-			}else if(strcmp(my_node2->name,"LB")==0){
-				Operand op=Exp_gen(cur);
-				if(label_true!=NULL&&label_false!=NULL){
-					newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
-					newIntercode(GOTO_INTERCODE,label_false);
-				}else if(label_true!=NULL){
-					newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
-				}else if(label_false!=NULL){
-					newIntercode(IFGOTO_INTERCODE,op,"==",zero,label_false);
-				}
+        }else if(strcmp(OP_node->name,"PLUS") == 0||strcmp(OP_node->name,"DIV")==0||strcmp(OP_node->name,"STAR")==0||strcmp(OP_node->name,"MINUS")==0){
+            Operand op1=Exp_gen(Exp1);
+            Operand op2=Exp_gen(OP_node->next_sib);
+            
+            int in_kind=arithKind(OP_node->name);
+            Operand result=createOP(TEMPVAR_OPERAND,VAR_OPERAND);		
+            if(op1!=NULL&&op2!=NULL)
+                newIntercode(in_kind,result,op1,op2);
+            
+            if(label_true!=NULL&&label_false!=NULL){
+                newIntercode(IFGOTO_INTERCODE,result,"!=",zero,label_true);
+                newIntercode(GOTO_INTERCODE,label_false);
+            }
+            else if(label_true!=NULL)
+                newIntercode(IFGOTO_INTERCODE,result,"!=",zero,label_true);
+            else if(label_false!=NULL)
+                newIntercode(IFGOTO_INTERCODE,result,"==",zero,label_false);
+        }else if(strcmp(OP_node->name,"LB")==0 || strcmp(OP_node->name,"DOT")==0){
+            Operand op=Exp_gen(cur_node);
+            if(label_true!=NULL&&label_false!=NULL){
+                newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
+                newIntercode(GOTO_INTERCODE,label_false);
+            }else if(label_true!=NULL){
+                newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
+            }else if(label_false!=NULL){
+                newIntercode(IFGOTO_INTERCODE,op,"==",zero,label_false);
+            }
+        }
 
-			}else if(strcmp(my_node2->name,"DOT")==0){
-				Operand op=Exp_gen(cur);
-				if(label_true!=NULL&&label_false!=NULL){
-					newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
-					newIntercode(GOTO_INTERCODE,label_false);
-				}else if(label_true!=NULL){
-					newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
-				}else if(label_false!=NULL){
-					newIntercode(IFGOTO_INTERCODE,op,"==",zero,label_false);
-				}
-			}
+    }else if(strcmp(case_node->name,"NOT")==0)
+        Cond_gen(case_node->next_sib,label_false,label_true);
+    else if(strcmp(case_node->name,"MINUS")==0){
+        Operand op=Exp_gen(cur_node);
+        if(label_true!=NULL&&label_false!=NULL){
+            newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
+            newIntercode(GOTO_INTERCODE,label_false);
+        }else if(label_true!=NULL){
+            newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
+        }else if(label_false!=NULL){
+            newIntercode(IFGOTO_INTERCODE,op,"==",zero,label_false);
+        }
+    }else if(strcmp(case_node->name,"LP")==0){
+        Cond_gen(case_node->next_sib,label_true,label_false);
+    }else if(strcmp(case_node->name,"ID")==0){
+        Operand op=Exp_gen(cur_node);
+        if(label_true!=NULL&&label_false!=NULL){
+            newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
+            newIntercode(GOTO_INTERCODE,label_false);
+        }else if(label_true!=NULL){
+            newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
+        }else if(label_false!=NULL){
+            newIntercode(IFGOTO_INTERCODE,op,"==",zero,label_false);
+        }
 
-		}else if(strcmp(my_node1->name,"NOT")==0){
-			struct AST_Node* expnode=AST_getChild(cur,1);
-			Cond_gen(expnode,label_false,label_true);
-		}else if(strcmp(my_node1->name,"MINUS")==0){
-			Operand op=Exp_gen(cur);
-			if(label_true!=NULL&&label_false!=NULL){
-				newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
-				newIntercode(GOTO_INTERCODE,label_false);
-			}else if(label_true!=NULL){
-				newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
-			}else if(label_false!=NULL){
-				newIntercode(IFGOTO_INTERCODE,op,"==",zero,label_false);
-			}
-		}else if(strcmp(my_node1->name,"LP")==0){
-			struct AST_Node* expnode=AST_getChild(cur,1);
-			Cond_gen(expnode,label_true,label_false);
-		}else if(strcmp(my_node1->name,"ID")==0){
-			Operand op=Exp_gen(cur);
-			if(label_true!=NULL&&label_false!=NULL){
-				newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
-				newIntercode(GOTO_INTERCODE,label_false);
-			}else if(label_true!=NULL){
-				newIntercode(IFGOTO_INTERCODE,op,"!=",zero,label_true);
-			}else if(label_false!=NULL){
-				newIntercode(IFGOTO_INTERCODE,op,"==",zero,label_false);
-			}
-
-		}else if(strcmp(my_node1->name,"INT")==0){
-			if(label_true!=NULL&&my_node1->is_int){
-				newIntercode(GOTO_INTERCODE,label_true);
-			}
-			if(label_false!=NULL&&!my_node1->is_int){
-				newIntercode(GOTO_INTERCODE,label_false);
-			}
-		}
-	}
-	return 0;
+    }else if(strcmp(case_node->name,"INT")==0){
+        if(label_true!=NULL&&case_node->is_int)
+            newIntercode(GOTO_INTERCODE,label_true);
+        if(label_false!=NULL&&!case_node->is_int)
+            newIntercode(GOTO_INTERCODE,label_false);
+    }
+	return;
 }

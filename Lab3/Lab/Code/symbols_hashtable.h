@@ -32,6 +32,7 @@ unsigned int hash_pjw(char *name);
 int struct_Find(Type *type, char *name);
 int symbol_Find_mrk(Type *type, char *name, int *ifdef, int depth, int mrk);
 int symbol_Kind_find(Type *type, char *name, int *ifdef, int depth, int *kind);
+int getarraydepth(ST_node arr_node);
 struct FieldList_
 {
     char *name;     //域的名字;

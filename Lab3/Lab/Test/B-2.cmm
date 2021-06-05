@@ -1,0 +1,66 @@
+int countSort(){
+    int x[5], count[10], sorted[5], i;
+    i = 0;
+    while (i < 10) {
+    count[i] = 0;
+    i = i + 1;
+    }
+    i = 0;
+    while (i < 5) {
+        x[i] = read();
+        count[x[i]] = count[x[i]] + 1;
+        i = i + 1;
+    }
+    i = 1;
+    while ( i < 10) {
+        count[i] = count[i] + count[i-1];
+        i = i + 1;
+    }
+    i = 0;
+    while ( i < 5 ) {
+        sorted[count[x[i]]-1] = x[i];
+        count[x[i]] = count[x[i]] - 1;
+        i = i + 1;
+    }
+    i = 0;
+    while (i < 5) {
+    write(sorted[i]);
+    i = i + 1;
+    }
+    return 0;
+}
+
+int bubbleSort(){
+    int a[5], b, c, tem;
+    b = 0;
+    while (b < 5) {
+        a[b] = read();
+        b = b + 1;
+    }
+    c = 1;
+    while (c == 1) {
+        c = 0;
+        b = 1;
+        while (b < 5) {
+            if (a[b] < a[b-1]) {
+                c = 1;
+                tem = a[b-1];
+                a[b-1] = a[b];
+                a[b] = tem;
+            }
+            b = b + 1;
+        }
+    }
+    b = 0;
+    while (b < 5) {
+        write(a[b]);
+        b = b + 1;
+    }
+    return 0;
+}
+
+int main(){
+    countSort();
+    bubbleSort();
+    return 0;
+}
