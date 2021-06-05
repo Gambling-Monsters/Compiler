@@ -29,10 +29,10 @@ struct InterCode
         ADD,
         SUB,
         MUL,
-        DIV,
+        DIV_I,
         FUNCTION_I,
         PARAM,
-        RETURN,
+        RETURN_I,
         CALL,
         DEC,
         LABEL_I,
@@ -223,7 +223,7 @@ void printIntercode(FILE *file)
             printOP(p1->code.u.binop.op2, file);
             break;
         }
-        case (DIV):
+        case (DIV_I):
         {
             printOP(p1->code.u.binop.result, file);
             fprintf(file, " := ");
@@ -245,7 +245,7 @@ void printIntercode(FILE *file)
             printOP(p1->code.u.param.result, file);
             break;
         }
-        case (RETURN):
+        case (RETURN_I):
         {
             fprintf(file, "RETURN ");
             printOP(p1->code.u.return_u.result, file);
@@ -350,7 +350,7 @@ void newIntercode(int kind, ...)
             p1->code.u.binop.op2 = va_arg(args, Operand);
             break;
         }
-        case DIV:
+        case DIV_I:
         {
             p1->code.u.binop.result = va_arg(args, Operand);
             p1->code.u.binop.op1 = va_arg(args, Operand);
@@ -367,7 +367,7 @@ void newIntercode(int kind, ...)
             p1->code.u.param.result = va_arg(args, Operand);
             break;
         }
-        case (RETURN):
+        case (RETURN_I):
         {
             p1->code.u.return_u.result = va_arg(args, Operand);
             break;
@@ -497,8 +497,9 @@ void init_gen(struct AST_Node* cur_node, FILE *fp)
     head_code->next = NULL;
     head_code->prev = NULL;
     tail_code = head_code;
-
+    
     Program_gen(cur_node);
+    // printf("here\n");
     printIntercode(fp);
 }
 
@@ -507,8 +508,9 @@ void Program_gen(struct AST_Node *cur_node)
     //Program -> ExfDefList
 
     struct AST_Node * temp_node0 = cur_node->child;
-    
+    // printf("here\n");
     ExtDefList_gen(cur_node->child);
+    
     return;
 }
 
@@ -521,8 +523,9 @@ void ExtDefList_gen(struct AST_Node *cur_node)
     struct AST_Node *ExtDef_node = cur_node->child;
     if (ExtDef_node == NULL) return;
     struct AST_Node *ExtDefList_node = AST_getChild(cur_node, 1);
-
+    
     ExtDef_gen(ExtDef_node);
+    
     if (ExtDefList_node != NULL)
         ExtDefList_gen(ExtDefList_node);
 
@@ -539,10 +542,12 @@ void ExtDef_gen(struct AST_Node *cur_node)
 
     struct AST_Node *FD_node = AST_getChild(cur_node, 1);
     struct AST_Node *CS_node = AST_getChild(cur_node, 2);
-
+    
     if (strcmp(FD_node->name, "FunDec") == 0 && strcmp(CS_node->name, "CompSt")==0)
     {
+        // printf("here\n");
         FunDec_gen(FD_node);
+        
         CompSt_gen(CS_node);
     }
 
@@ -555,14 +560,16 @@ void CompSt_gen(struct AST_Node *cur_node)
     // DefList -> Def DefList
     // | (empty)
     struct AST_Node *temp = AST_getChild(cur_node, 1);
-
+    // printf("here\n");
     if (strcmp(temp->name, "DefList") == 0)
     {
         DefList_gen(temp);
         struct AST_Node *SL_node = AST_getChild(cur_node, 2);
-
-        if (strcmp(SL_node->name, "StmtList") == 0)
+        // printf("here\n");
+        if (strcmp(SL_node->name, "StmtList") == 0){
+            
             StmtList_gen(SL_node);
+        }
     }
     else if (strcmp(temp->name, "StmtList")==0) //DefList is empty
         StmtList_gen(temp);
@@ -576,8 +583,9 @@ void StmtList_gen(struct AST_Node *cur_node)
     // | empty
 
     if(cur_node == NULL) return;
-
+    // printf("here\n");
     Stmt_gen(cur_node->child);
+    // printf("here\n");
     struct AST_Node *temp = AST_getChild(cur_node, 1);
     if (temp != NULL)
         StmtList_gen(temp);
@@ -594,15 +602,21 @@ void Stmt_gen(struct AST_Node *cur_node)
     // | IF LP Exp RP Stmt | IF LP Exp RP Stmt1 ELSE Stmt2
 
     struct AST_Node *temp = cur_node->child;
-    if(strcmp(temp->name, "Exp") == 0)
+    if(strcmp(temp->name, "Exp") == 0){
+        // printf("here1\n");
         Exp_gen(temp);
-    else if (strcmp(temp->name, "CompSt") == 0)
-        CompSt_gen(temp);
+        //  printf("here1\n");
+    }
+    else if (strcmp(temp->name, "CompSt") == 0){
+        // printf("here2\n");
+        // CompSt_gen(temp);
+    }
     else if (strcmp(temp->name, "RETURN") == 0)
     {
+        // printf("here3\n");
         struct AST_Node *exp_node = AST_getChild(cur_node, 1);
         Operand exp_op = Exp_gen(exp_node);
-        newIntercode(RETURN, exp_op);
+        newIntercode(RETURN_I, exp_op);
     }
     else if (strcmp(temp->name, "WHILE") == 0)
     {
@@ -613,7 +627,7 @@ void Stmt_gen(struct AST_Node *cur_node)
         //code1 = translate_Cond(Exp, label2, sym_table)
         //code2 = translate_Stmt(Stmt, sym_table)
         //return [LABEL label1] + code1 + code2 + [GOTO label1] + [LABEL label2]
-
+        // printf("here4\n");
         struct AST_Node *exp_node = AST_getChild(cur_node, 2);
         struct AST_Node *stmt_node = AST_getChild(cur_node, 4);
 
@@ -637,7 +651,7 @@ void Stmt_gen(struct AST_Node *cur_node)
         //code3 = translate_Stmt(Stmt2, sym_table) (unuse in IF LP Exp RP Stmt)
         //return code1 + code2 + [LABEL label1](false)
         //return code1 + code2 + [GOTO label2] + [LABEL label1](false) + code3 + [LABEL label2]
-
+        // printf("here5\n");
         struct AST_Node *exp_node = AST_getChild(cur_node, 2);
         struct AST_Node *else_node = AST_getChild(cur_node, 5);
 
@@ -801,11 +815,14 @@ void Arg_gen(struct AST_Node *cur_node, FieldList para)
 
 Operand Exp_ID(struct AST_Node *cur_node)
 {
+    // printf("herecond\n");
     Operand ret_op = NULL;
     struct AST_Node* ID = cur_node->child;
     struct AST_Node* LP = ID->next_sib;
+    
     if(LP == NULL)
     {
+        //  printf("hereid1\n");
         ST_node ID_node = find_symbol(ID->is_string, __INT_MAX__);
         ret_op=createOP(VARIABLE_O,ID_node->ifaddress,ID->is_string);
         varible_num--;
@@ -814,9 +831,11 @@ Operand Exp_ID(struct AST_Node *cur_node)
         return ret_op;
     }else
     {
+        // printf("hereid2\n");
         struct AST_Node* Args = LP->next_sib;
         if(strcmp(Args->name,"Args")==0)
         {
+            // printf("hereid1\n");
             if(strcmp(ID->is_string,"write")==0){
                 struct AST_Node* output_node=Args->child;
                 Operand output=NULL;
@@ -834,21 +853,28 @@ Operand Exp_ID(struct AST_Node *cur_node)
                 newIntercode(CALL,ret_op,functionname);
                 return ret_op;
             }
-        }else{ // Args = RP        
+        }else{ // Args = RP   
+            
             ret_op=createOP(TEMPVAR,1);
+            
             if(strcmp(ID->is_string,"read")==0){
+                
                 newIntercode(READ,ret_op);
+                //  printf("hereid1\n");
                 return ret_op;
             }
+            
             Operand functionname=createOP(FUNCTION_O,1,ID->is_string);
             newIntercode(CALL,ret_op,functionname);
             return ret_op;
         }
+        
     }
 }
 
 Operand Exp_Exp(struct AST_Node *cur_node)
 {
+    
     Operand ret_op = NULL;
     struct AST_Node* Exp1 = cur_node->child;
     struct AST_Node* OP_node = Exp1->next_sib;
@@ -867,7 +893,7 @@ Operand Exp_Exp(struct AST_Node *cur_node)
         else if (strcmp(OP_node->name, "STAR") == 0)
             in_kind = MUL;
         else if (strcmp(OP_node->name, "DIV") == 0)
-            in_kind = DIV;
+            in_kind = DIV_I;
         ret_op=createOP(TEMPVAR,1);
         Operand op1=Exp_gen(Exp1);
         Operand op2=Exp_gen(Exp2);
@@ -1012,12 +1038,19 @@ Operand Exp_Exp(struct AST_Node *cur_node)
 Operand Exp_gen(struct AST_Node *cur_node){
 
     struct AST_Node* case_node = cur_node->child;
-    if(strcmp(case_node->name,"INT")==0)
+    // printf("here1\n");
+    if(strcmp(case_node->name,"INT")==0){
+        // printf("here1\n");
         return createOP(CONSTANT,1,case_node->is_int);
-    else if(strcmp(case_node->name,"LP")==0)
+    }
+    else if(strcmp(case_node->name,"LP")==0){
+        // printf("here2\n");
         return Exp_gen(AST_getChild(cur_node,1));
+    }
+        
     else if(strcmp(case_node->name,"MINUS")==0){
-		Operand op1=Exp_gen(case_node->next_sib);
+		// printf("here3\n");
+        Operand op1=Exp_gen(case_node->next_sib);
         Operand zero=createOP(CONSTANT,1,0);
 		Operand op2=createOP(TEMPVAR,1);
 		newIntercode(SUB, op2, zero, op1);
@@ -1029,6 +1062,7 @@ Operand Exp_gen(struct AST_Node *cur_node){
             ||strcmp(case_node->next_sib->name,"AND")==0
             ||strcmp(case_node->next_sib->name,"OR")==0)))
 	{
+        // printf("here4\n");
 		Operand label1=createOP(LABEL, 1);
 		Operand label2=createOP(LABEL, 1);
 
@@ -1040,15 +1074,20 @@ Operand Exp_gen(struct AST_Node *cur_node){
 		newIntercode(LABEL_I,label2);
 		return ret_op;
 	}
-    else if(strcmp(case_node->name,"ID") == 0)
+    else if(strcmp(case_node->name,"ID") == 0){
+        printf("here5\n");
         return Exp_ID(cur_node);
-    else if(strcmp(case_node->name,"Exp") == 0)
+    }
+    else if(strcmp(case_node->name,"Exp") == 0){
+        // printf("here6\n");
         return Exp_Exp(cur_node);
+    }
+        
 }
 
 void Cond_gen(struct AST_Node* cur_node,Operand label_true,Operand label_false){
 	Operand zero=createOP(CONSTANT,1,0);
-
+    
     struct AST_Node* case_node=cur_node->child;
     if(strcmp(case_node->name,"Exp")==0){
         struct AST_Node* Exp1=cur_node->child;
@@ -1137,7 +1176,7 @@ void Cond_gen(struct AST_Node* cur_node,Operand label_true,Operand label_false){
             else if (strcmp(OP_node->name, "STAR") == 0)
                 in_kind = MUL;
             else if (strcmp(OP_node->name, "DIV") == 0)
-                in_kind = DIV;
+                in_kind = DIV_I;
             Operand result=createOP(TEMPVAR,1);		
             if(op1!=NULL&&op2!=NULL)
                 newIntercode(in_kind,result,op1,op2);
