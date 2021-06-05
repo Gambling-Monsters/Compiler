@@ -585,7 +585,7 @@ void DefList_gen(struct AST_Node *cur_node)
     struct AST_Node * Def_node = cur_node->child;
     if (Def_node != NULL)
     {
-        Def_gen(Def_node->child->next_sib);
+        DefList_gen(Def_node->child->next_sib);
         DefList_gen(Def_node->next_sib);
     }
     return;
