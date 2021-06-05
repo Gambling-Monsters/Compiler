@@ -426,10 +426,7 @@ void init_gen(struct AST_Node* cur_node, FILE *fp)
 
 void Program_gen(struct AST_Node *cur_node)
 {
-    //Program -> ExfDefList
-
-    struct AST_Node * temp_node0 = cur_node->child;
-    
+    //Program -> ExfDefList    
     ExtDefList_gen(cur_node->child);
     return;
 }
@@ -440,9 +437,11 @@ void ExtDefList_gen(struct AST_Node *cur_node)
     //| (empty)
 
     if(cur_node == NULL) return;
+
     struct AST_Node *ExtDef_node = cur_node->child;
     if (ExtDef_node == NULL) return;
-    struct AST_Node *ExtDefList_node = AST_getChild(cur_node, 1);
+
+    struct AST_Node *ExtDefList_node = ExtDef_node->next_sib;
 
     ExtDef_gen(ExtDef_node);
     if (ExtDefList_node != NULL)
@@ -481,10 +480,7 @@ void CompSt_gen(struct AST_Node *cur_node)
     if (strcmp(temp->name, "DefList") == 0)
     {
         DefList_gen(temp);
-        struct AST_Node *SL_node = AST_getChild(cur_node, 2);
-
-        if (strcmp(SL_node->name, "StmtList") == 0)
-            StmtList_gen(SL_node);
+        StmtList_gen(temp->next_sib);
     }
     else if (strcmp(temp->name, "StmtList")==0) //DefList is empty
         StmtList_gen(temp);
@@ -500,9 +496,7 @@ void StmtList_gen(struct AST_Node *cur_node)
     if(cur_node == NULL) return;
 
     Stmt_gen(cur_node->child);
-    struct AST_Node *temp = AST_getChild(cur_node, 1);
-    if (temp != NULL)
-        StmtList_gen(temp);
+    StmtList_gen(cur_node->child->next_sib);
 
     return;
 }
@@ -522,7 +516,7 @@ void Stmt_gen(struct AST_Node *cur_node)
         CompSt_gen(temp);
     else if (strcmp(temp->name, "RETURN") == 0)
     {
-        struct AST_Node *exp_node = AST_getChild(cur_node, 1);
+        struct AST_Node *exp_node = temp->next_sib;
         Operand exp_op = Exp_gen(exp_node);
         newIntercode(RETURN_INTERCODE, exp_op);
     }
@@ -586,23 +580,14 @@ void DefList_gen(struct AST_Node *cur_node)
 {
     //DefList -> Def DefList
     // | (empty)
-    //Def -> Specifier DecList SEMI
-
+    // Def -> Specifier DecList SEMI(merge)
+    if(cur_node==NULL) return;
     struct AST_Node * Def_node = cur_node->child;
     if (Def_node != NULL)
     {
-        Def_gen(Def_node);
-        struct AST_Node * DL_node = AST_getChild(cur_node, 1);
-        if (DL_node != NULL)
-            DefList_gen(DL_node);
+        Def_gen(Def_node->child->next_sib);
+        DefList_gen(Def_node->next_sib);
     }
-    return;
-}
-
-void Def_gen(struct AST_Node *cur_node)
-{
-    // Def -> Specifier DecList SEMI
-    DecList_gen(AST_getChild(cur_node, 1));
     return;
 }
 
@@ -623,8 +608,7 @@ void Dec_gen(struct AST_Node *cur_node)
     // Dec -> VarDec
     // | VarDec ASSIGNOP Exp
     
-    struct AST_Node *VD_node = cur_node->child;
-    Operand op1 = VarDec_gen(VD_node);
+    Operand op1 = VarDec_gen(cur_node->child);
     if (AST_getChild(cur_node, 1) != NULL)
     {
         Operand op2 = Exp_gen(AST_getChild(cur_node, 2));

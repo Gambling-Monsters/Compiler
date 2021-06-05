@@ -70,7 +70,6 @@ void CompSt_gen(struct AST_Node *cur);
 void DefList_gen(struct AST_Node *cur);
 void StmtList_gen(struct AST_Node *cur);
 void Stmt_gen(struct AST_Node *cur);
-void Def_gen(struct AST_Node *cur);
 void DecList_gen(struct AST_Node *cur);
 void Dec_gen(struct AST_Node *cur);
 void Arg_gen(struct AST_Node *cur, FieldList para);
