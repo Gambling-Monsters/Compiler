@@ -12,7 +12,7 @@ struct Operand_ {
         LABEL,
         TEMPVAR,
     } kind;
-    union {
+    struct {
         int var_no;
         int value;
         int depth;
@@ -860,7 +860,6 @@ Operand Exp_ID(struct AST_Node *cur_node)
             if(strcmp(ID->is_string,"read")==0){
                 
                 newIntercode(READ,ret_op);
-                //  printf("hereid1\n");
                 return ret_op;
             }
             
@@ -905,15 +904,19 @@ Operand Exp_Exp(struct AST_Node *cur_node)
             Operand op1=Exp_gen(Exp1);
             Operand op2=Exp_gen(Exp2);
             int flag=0;
-            ST_node queryid1=find_symbol(op1->u.varible_name,__INT_MAX__);
-            ST_node queryid2=find_symbol(op2->u.varible_name,__INT_MAX__);
             if(op1->u.varible_name!=NULL&&op2->u.varible_name!=NULL){
-                if(queryid1->type->kind==ARRAY&&queryid2->type->kind==ARRAY)
-                    if(op1->u.address_ornot==1&&op2->u.address_ornot==1)
-                        flag=1;
+                ST_node queryid1=find_symbol(op1->u.varible_name,__INT_MAX__);
+                ST_node queryid2=find_symbol(op2->u.varible_name,__INT_MAX__);
+                if(op1->u.varible_name!=NULL&&op2->u.varible_name!=NULL){
+                    if(queryid1->type->kind==ARRAY&&queryid2->type->kind==ARRAY)
+                        if(op1->u.address_ornot==1&&op2->u.address_ornot==1)
+                            flag=1;
+                }
             }
             if(flag==1)
             {
+                ST_node queryid1=find_symbol(op1->u.varible_name,__INT_MAX__);
+                ST_node queryid2=find_symbol(op2->u.varible_name,__INT_MAX__);
                 int depth1=op1->u.depth;
                 int depth2=op2->u.depth;
 
@@ -1075,7 +1078,6 @@ Operand Exp_gen(struct AST_Node *cur_node){
 		return ret_op;
 	}
     else if(strcmp(case_node->name,"ID") == 0){
-        printf("here5\n");
         return Exp_ID(cur_node);
     }
     else if(strcmp(case_node->name,"Exp") == 0){
