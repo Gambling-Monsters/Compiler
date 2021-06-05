@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "/home/submergence/Submerged_Code/Compiler/Lab3/Lab/Code/parser",
-            "args": ["/home/submergence/Submerged_Code/Compiler/Lab3/Lab/Test/test3.cmm",
+            "args": ["/home/submergence/Submerged_Code/Compiler/Lab3/Lab/Test/A-4.cmm",
                 "/home/submergence/Submerged_Code/Compiler/Lab3/Lab/Code/out.ir"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

@@ -1,0 +1,28 @@
+int search(int target) {
+    int x[5], left, right, index, middle;
+    int i = 0;
+    while(i < 5) {
+        x[i] = read();
+        i = i + 1;
+    }
+    left = 0;
+    right = 4;
+    while (left <= right) {
+        index = (left + right) / 2;
+        middle = x[index];
+        if (middle == target) {return index;}
+        if ((middle > x[left] && target >= x[left] && target < middle) || (middle < x[left] && (target >= x[left] || target < middle))) {
+            right = index -1;
+        } else {
+            left = index + 1;
+        }
+    }
+    return -1;
+}
+
+int main(){
+    int n;
+    n = read();
+    write(search(n));
+    return 0;
+}
