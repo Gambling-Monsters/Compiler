@@ -807,6 +807,7 @@ void FunDec_gen(struct AST_Node *cur_node)
             ST_node query_paras = find_symbol(paras->name, __INT_MAX__);
             query_paras->var_no = paraop->u.var_no;
             query_paras->address_ornot = paraop->u.address_ornot;
+            paraop->u.address_ornot = 1;
             newIntercode(PARAM_I, paraop);
             paras = paras->tail;
         }
