@@ -1,0 +1,29 @@
+FUNCTION main : 
+#3 := varible_6
+#12 := varible_0
+tempvar_2 := varible_0 * varible_0
+tempvar_1 := tempvar_2 + #13
+tempvar_1 := varible_4
+tempvar_4 := varible_4 / #13
+tempvar_3 := tempvar_4 + #1
+tempvar_3 := varible_1
+tempvar_6 := varible_0 / varible_4
+tempvar_7 := varible_4 * varible_1
+tempvar_5 := tempvar_6 + tempvar_7
+tempvar_5 := varible_2
+WRITE varible_2
+#0 := tempvar_8
+tempvar_10 := varible_2 * #2
+tempvar_9 := varible_6 + tempvar_10
+tempvar_9 := varible_5
+WRITE varible_5
+#0 := tempvar_11
+tempvar_15 := varible_0 + varible_4
+tempvar_14 := tempvar_15 + varible_1
+tempvar_16 := varible_0 / varible_5
+tempvar_13 := tempvar_14 + tempvar_16
+tempvar_12 := tempvar_13 + varible_6
+tempvar_12 := varible_6
+WRITE varible_6
+#0 := tempvar_17
+RETURN #0

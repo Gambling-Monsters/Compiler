@@ -7,10 +7,10 @@ typedef struct Operand_* Operand;
 struct Operand_ {
     enum {
         VARIABLE_O,
-        CONSTANT,
+        CONSTANT_O,
         FUNCTION_O,
-        LABEL,
-        TEMPVAR,
+        LABEL_O,
+        TEMPVAR_O,
     } kind;
     struct {
         int var_no;
@@ -25,22 +25,22 @@ struct Operand_ {
 struct InterCode
 {
     enum {
-        ASSIGN,
-        ADD,
-        SUB,
-        MUL,
+        ASSIGN_I,
+        ADD_I,
+        SUB_I,
+        MUL_I,
         DIV_I,
         FUNCTION_I,
-        PARAM,
+        PARAM_I,
         RETURN_I,
-        CALL,
-        DEC,
+        CALL_I,
+        DEC_I,
         LABEL_I,
-        GOTO,
-        IFGOTO,
-        ARGS,
-        READ,
-        WRITE
+        GOTO_I,
+        IFGOTO_I,
+        ARGS_I,
+        READ_I,
+        WRITE_I
     } kind;
     union {
         struct { Operand right, left; } assign;
@@ -52,7 +52,7 @@ struct InterCode
         struct { Operand result, op; } call;
         struct { Operand result; } label;
         struct { Operand result; } goto_u;
-        struct { char* mrk; Operand result, op1, op2; } ifgoto;
+        struct { Operand result, op1, op2; char* mrk; } ifgoto;
         struct { Operand result; } args;
         struct { Operand result; } read;
         struct { Operand result; } write;
@@ -76,15 +76,15 @@ extern struct AST_Node *AST_getChild(struct AST_Node *cur_node, int depth);
 //辅助函数
 
 //有新的操作
-Operand createOP(int kind, int address, ...)
+Operand createOP(int new_opkind, int new_opaddress, ...)
 {
     Operand init_operand = (Operand)(malloc(sizeof(struct Operand_)));
-    init_operand->kind = kind;
-    init_operand->u.address_ornot = address;
+    init_operand->kind = new_opkind;
+    init_operand->u.address_ornot = new_opaddress;
     
     va_list args;
-    va_start(args, address);
-    switch (kind)
+    va_start(args, new_opaddress);
+    switch (new_opkind)
     {
     case (VARIABLE_O):
     {
@@ -92,24 +92,28 @@ Operand createOP(int kind, int address, ...)
         init_operand->u.varible_name = va_arg(args, char *);
         break;
     }
-    case (CONSTANT):
+    case (CONSTANT_O):
     {
         init_operand->u.value = va_arg(args, int);
+        init_operand->u.varible_name = NULL;
         break;
     }
     case (FUNCTION_O):
     {
         init_operand->u.function_name = va_arg(args, char *);
+        init_operand->u.varible_name = NULL;
         break;
     }
-    case (LABEL):
+    case (LABEL_O):
     {
         init_operand->u.var_no = label_num++;
+        init_operand->u.varible_name = NULL;
         break;
     }
-    case (TEMPVAR):
+    case (TEMPVAR_O):
     {
         init_operand->u.var_no = tempvar_num++;
+        init_operand->u.varible_name = NULL;
         break;
     }
     }
@@ -125,7 +129,7 @@ Operand copyOP(Operand op)
     new_operand->u.var_no = op->u.var_no;
     new_operand->u.value = op->u.value;
     new_operand->u.depth = op->u.depth;
-    new_operand->u.address_ornot = new_operand->u.address_ornot;
+    new_operand->u.address_ornot = op->u.address_ornot;
     new_operand->u.varible_name = op->u.varible_name;
     new_operand->u.function_name = op->u.function_name;
     return new_operand;
@@ -150,7 +154,7 @@ void printOP(Operand op, FILE *file)
             
         break;
     }
-    case (CONSTANT):
+    case (CONSTANT_O):
     {
         fprintf(file, "#%d", op->u.value);
         break;
@@ -160,12 +164,12 @@ void printOP(Operand op, FILE *file)
         fprintf(file, "%s", op->u.function_name);
         break;
     }
-    case (LABEL):
+    case (LABEL_O):
     {
         fprintf(file, "%d", op->u.var_no);
         break;
     }
-    case (TEMPVAR):
+    case (TEMPVAR_O):
     {
         if (!op->u.address_ornot)//解引用
         {
@@ -185,42 +189,118 @@ void printOP(Operand op, FILE *file)
 void printIntercode(FILE *file)
 {
     InterCode_L p1 = head_code->next;
-    while (p1 != head_code)//双向链表
+    while (p1 != head_code)
     {
         switch (p1->code.kind)
         {
-        case (ASSIGN):
+        case (FUNCTION_I):
+        {
+            fprintf(file, "FUNCTION ");
+            printOP(p1->code.u.function.result, file);
+            fprintf(file, " : \n");
+            break;
+        }
+        case (PARAM_I):
+        {
+            fprintf(file, "PARAM ");
+            printOP(p1->code.u.param.result, file);
+            fprintf(file, "\n");
+            break;
+        }
+        case (RETURN_I):
+        {
+            fprintf(file, "RETURN ");
+            printOP(p1->code.u.return_u.result, file);
+            fprintf(file, "\n");
+            break;
+        }
+        case (LABEL_I):
+        {
+            fprintf(file, "LABEL label");
+            printOP(p1->code.u.label.result, file);
+            fprintf(file, " : \n");
+            break;
+        }
+        case (GOTO_I):
+        {
+            fprintf(file, "GOTO label");
+            printOP(p1->code.u.goto_u.result, file);
+            fprintf(file, "\n");
+            break;
+        }
+        case (WRITE_I):
+        {
+            fprintf(file, "WRITE ");
+            printOP(p1->code.u.write.result, file);
+            fprintf(file, "\n");
+            break;
+        }
+        case (READ_I):
+        {
+            fprintf(file, "READ ");
+            printOP(p1->code.u.read.result, file);
+            fprintf(file, "\n");
+            break;
+        }
+        case (ARGS_I):
+        {
+            fprintf(file, "ARG ");
+            printOP(p1->code.u.args.result, file);
+            fprintf(file, " \n");
+            break;
+        }
+        case (ASSIGN_I):
         {
             printOP(p1->code.u.assign.left, file);
             fprintf(file, " := ");
             printOP(p1->code.u.assign.right, file);
+            fprintf(file, "\n");
             break;
         }
-        case (ADD):
+        case (DEC_I):
+        {
+            fprintf(file, "DEC ");
+            printOP(p1->code.u.dec.op, file);
+            fprintf(file, " %d", p1->code.u.dec.result->u.value);
+            fprintf(file, "\n");
+            break;
+        }
+        case (CALL_I):
+        {
+            printOP(p1->code.u.call.op, file);
+            fprintf(file, " := CALL ");
+            printOP(p1->code.u.call.result, file);
+            fprintf(file, "\n");
+            break;
+        }
+        case (ADD_I):
         {
             printOP(p1->code.u.binop.result, file);
             fprintf(file, " := ");
             printOP(p1->code.u.binop.op1, file);
             fprintf(file, " + ");
             printOP(p1->code.u.binop.op2, file);
+            fprintf(file, "\n");
             break;
         }
-        case (SUB):
+        case (SUB_I):
         {
             printOP(p1->code.u.binop.result, file);
             fprintf(file, " := ");
             printOP(p1->code.u.binop.op1, file);
             fprintf(file, " - ");
             printOP(p1->code.u.binop.op2, file);
+            fprintf(file, "\n");
             break;
         }
-        case (MUL):
+        case (MUL_I):
         {
             printOP(p1->code.u.binop.result, file);
             fprintf(file, " := ");
             printOP(p1->code.u.binop.op1, file);
             fprintf(file, " * ");
             printOP(p1->code.u.binop.op2, file);
+            fprintf(file, "\n");
             break;
         }
         case (DIV_I):
@@ -230,54 +310,10 @@ void printIntercode(FILE *file)
             printOP(p1->code.u.binop.op1, file);
             fprintf(file, " / ");
             printOP(p1->code.u.binop.op2, file);
+            fprintf(file, "\n");
             break;
         }
-        case (FUNCTION_I):
-        {
-            fprintf(file, "FUNCTION ");
-            printOP(p1->code.u.function.result, file);
-            fprintf(file, " : ");
-            break;
-        }
-        case (PARAM):
-        {
-            fprintf(file, "PARAM ");
-            printOP(p1->code.u.param.result, file);
-            break;
-        }
-        case (RETURN_I):
-        {
-            fprintf(file, "RETURN ");
-            printOP(p1->code.u.return_u.result, file);
-            break;
-        }
-        case (CALL):
-        {
-            printOP(p1->code.u.call.op, file);
-            fprintf(file, " := CALL ");
-            printOP(p1->code.u.call.result, file);
-            break;
-        }
-        case (DEC):
-        {
-            fprintf(file, "DEC ");
-            printOP(p1->code.u.dec.op, file);
-            fprintf(file, " %d", p1->code.u.dec.result->u.value);
-            break;
-        }
-        case (LABEL_I):
-        {
-            fprintf(file, "LABEL label");
-            printOP(p1->code.u.label.result, file);
-            break;
-        }
-        case (GOTO):
-        {
-            fprintf(file, "GOTO label");
-            printOP(p1->code.u.goto_u.result, file);
-            break;
-        }
-        case (IFGOTO):
+        case (IFGOTO_I):
         {
             fprintf(file, "IF ");
             printOP(p1->code.u.ifgoto.result, file);
@@ -285,71 +321,98 @@ void printIntercode(FILE *file)
             printOP(p1->code.u.ifgoto.op1, file);
             fprintf(file, " GOTO label");
             printOP(p1->code.u.ifgoto.op2, file);
-            break;
-        }
-        case (ARGS):
-        {
-            fprintf(file, "ARG ");
-            printOP(p1->code.u.args.result, file);
-            break;
-        }
-        case (READ):
-        {
-            fprintf(file, "READ ");
-            printOP(p1->code.u.read.result, file);
-            break;
-        }
-        case (WRITE):
-        {
-            fprintf(file, "WRITE ");
-            printOP(p1->code.u.write.result, file);
+            fprintf(file, "\n");
             break;
         }
         }
         p1 = p1->next;
-        fprintf(file, "\n");
     }
     fclose(file);
+}
+
+void Link_Insert(InterCode_L cur)
+{
+    cur->prev = tail_code;
+    cur->next = head_code;
+    tail_code->next = cur;
+    head_code->prev = cur;
+    tail_code = cur;
 }
 
 //中间代码生成
 void newIntercode(int kind, ...)
 {
+    va_list args;
+    va_start(args, kind);
     InterCode_L p1 = (InterCode_L)(malloc(sizeof(struct InterCode_Link)));
     p1->code.kind = kind;
     p1->next = NULL;
 
-    va_list args;
-    va_start(args, kind);
     switch (kind)
     {
-        case (ASSIGN):
+        case FUNCTION_I:
         {
-            p1->code.u.assign.left = va_arg(args, Operand);
+            p1->code.u.function.result = va_arg(args, Operand);
+            break;
+        }
+        case PARAM_I:
+        {
+            p1->code.u.param.result = va_arg(args, Operand);
+            break;
+        }
+        case RETURN_I:
+        {
+            p1->code.u.return_u.result = va_arg(args, Operand);
+            break;
+        }
+        case LABEL_I:
+        {
+            p1->code.u.label.result = va_arg(args, Operand);
+            break;
+        }
+        case GOTO_I:
+        {
+            p1->code.u.goto_u.result = va_arg(args, Operand);
+            break;
+        }
+        case WRITE_I:
+        {
+            p1->code.u.write.result = va_arg(args, Operand);
+            break;
+        }
+        case READ_I:
+        {
+            p1->code.u.read.result = va_arg(args, Operand);
+            break;
+        }
+        case ARGS_I:
+        {
+            p1->code.u.args.result = va_arg(args, Operand);
+            break;
+        }
+
+        case ASSIGN_I:
+        {
             p1->code.u.assign.right = va_arg(args, Operand);
+            p1->code.u.assign.left = va_arg(args, Operand);
             break;
         }
-        case (ADD):
+        case DEC_I:
         {
-            p1->code.u.binop.result = va_arg(args, Operand);
-            p1->code.u.binop.op1 = va_arg(args, Operand);
-            p1->code.u.binop.op2 = va_arg(args, Operand);
+            p1->code.u.call.op = va_arg(args, Operand);
+            p1->code.u.call.result = va_arg(args, Operand);
             break;
         }
-        case (SUB):
+        case CALL_I:
         {
-            p1->code.u.binop.result = va_arg(args, Operand);
-            p1->code.u.binop.op1 = va_arg(args, Operand);
-            p1->code.u.binop.op2 = va_arg(args, Operand);
+            p1->code.u.call.op = va_arg(args, Operand);
+            p1->code.u.call.result = va_arg(args, Operand);
             break;
         }
-        case (MUL):
-        {
-            p1->code.u.binop.result = va_arg(args, Operand);
-            p1->code.u.binop.op1 = va_arg(args, Operand);
-            p1->code.u.binop.op2 = va_arg(args, Operand);
-            break;
-        }
+
+        case ADD_I:
+        case SUB_I:
+        case MUL_I:
         case DIV_I:
         {
             p1->code.u.binop.result = va_arg(args, Operand);
@@ -357,70 +420,19 @@ void newIntercode(int kind, ...)
             p1->code.u.binop.op2 = va_arg(args, Operand);
             break;
         }
-        case (FUNCTION_I):
-        {
-            p1->code.u.function.result = va_arg(args, Operand);
-            break;
-        }
-        case (PARAM):
-        {
-            p1->code.u.param.result = va_arg(args, Operand);
-            break;
-        }
-        case (RETURN_I):
-        {
-            p1->code.u.return_u.result = va_arg(args, Operand);
-            break;
-        }
-        case (CALL):
-        {
-            p1->code.u.call.op = va_arg(args, Operand);
-            p1->code.u.call.result = va_arg(args, Operand);
-            break;
-        }
-        case (DEC):
-        {
-            p1->code.u.dec.op = va_arg(args, Operand);
-            p1->code.u.dec.result = va_arg(args, Operand);
-            break;
-        }
-        case (LABEL_I):
-        {
-            p1->code.u.label.result = va_arg(args, Operand);
-            break;
-        }
-        case (GOTO):
-        {
-            p1->code.u.goto_u.result = va_arg(args, Operand);
-            break;
-        }
-        case IFGOTO:
+
+        case IFGOTO_I:
         {
             p1->code.u.ifgoto.result = va_arg(args, Operand);
             p1->code.u.ifgoto.mrk = va_arg(args, char *);
             p1->code.u.ifgoto.op1 = va_arg(args, Operand);
             p1->code.u.ifgoto.op2 = va_arg(args, Operand);
         }
-        case (ARGS):
-        {
-            p1->code.u.args.result = va_arg(args, Operand);
-            break;
-        }
-        case (READ):
-        {
-            p1->code.u.read.result = va_arg(args, Operand);
-            break;
-        }
-        case (WRITE):
-        {
-            p1->code.u.write.result = va_arg(args, Operand);
-            break;
-        }
     }
     p1->prev = tail_code;
     p1->next = head_code;
     tail_code->next = p1;
-    head_code->next = p1;
+    head_code->prev = p1;
     tail_code = p1;
     va_end(args);
 }
@@ -499,7 +511,7 @@ void init_gen(struct AST_Node* cur_node, FILE *fp)
     tail_code = head_code;
     
     Program_gen(cur_node);
-    // printf("here\n");
+     
     printIntercode(fp);
 }
 
@@ -509,6 +521,7 @@ void Program_gen(struct AST_Node *cur_node)
 
     struct AST_Node * temp_node0 = cur_node->child;
     // printf("here\n");
+    
     ExtDefList_gen(cur_node->child);
     
     return;
@@ -545,10 +558,12 @@ void ExtDef_gen(struct AST_Node *cur_node)
     
     if (strcmp(FD_node->name, "FunDec") == 0 && strcmp(CS_node->name, "CompSt")==0)
     {
+        
         // printf("here\n");
         FunDec_gen(FD_node);
-        
+         
         CompSt_gen(CS_node);
+        
     }
 
     return;
@@ -561,18 +576,25 @@ void CompSt_gen(struct AST_Node *cur_node)
     // | (empty)
     struct AST_Node *temp = AST_getChild(cur_node, 1);
     // printf("here\n");
+    
     if (strcmp(temp->name, "DefList") == 0)
     {
         DefList_gen(temp);
         struct AST_Node *SL_node = AST_getChild(cur_node, 2);
         // printf("here\n");
+        
         if (strcmp(SL_node->name, "StmtList") == 0){
             
             StmtList_gen(SL_node);
+            // printf("here1\n");
         }
     }
     else if (strcmp(temp->name, "StmtList")==0) //DefList is empty
+    {
+        // printf("here2\n");
         StmtList_gen(temp);
+    }
+        
     
     return;
 }
@@ -584,7 +606,9 @@ void StmtList_gen(struct AST_Node *cur_node)
 
     if(cur_node == NULL) return;
     // printf("here\n");
+    
     Stmt_gen(cur_node->child);
+    
     // printf("here\n");
     struct AST_Node *temp = AST_getChild(cur_node, 1);
     if (temp != NULL)
@@ -600,7 +624,7 @@ void Stmt_gen(struct AST_Node *cur_node)
     // | RETURN Exp SEMI
     // | WHILE LP Exp RP Stmt
     // | IF LP Exp RP Stmt | IF LP Exp RP Stmt1 ELSE Stmt2
-
+    
     struct AST_Node *temp = cur_node->child;
     if(strcmp(temp->name, "Exp") == 0){
         // printf("here1\n");
@@ -631,13 +655,13 @@ void Stmt_gen(struct AST_Node *cur_node)
         struct AST_Node *exp_node = AST_getChild(cur_node, 2);
         struct AST_Node *stmt_node = AST_getChild(cur_node, 4);
 
-        Operand label1 = createOP(LABEL, 1);
-        Operand label2 = createOP(LABEL, 1);
+        Operand label1 = createOP(LABEL_O, 1);
+        Operand label2 = createOP(LABEL_O, 1);
 
         newIntercode(LABEL_I, label1);
         Cond_gen(exp_node, NULL, label2);
         Stmt_gen(stmt_node);
-        newIntercode(GOTO, label1);
+        newIntercode(GOTO_I, label1);
         newIntercode(LABEL_I, label2);
     }
     else if (strcmp(temp->name, "IF") == 0)
@@ -655,7 +679,7 @@ void Stmt_gen(struct AST_Node *cur_node)
         struct AST_Node *exp_node = AST_getChild(cur_node, 2);
         struct AST_Node *else_node = AST_getChild(cur_node, 5);
 
-        Operand label1 = createOP(LABEL, VARIABLE_O);
+        Operand label1 = createOP(LABEL_O, VARIABLE_O);
 
         Cond_gen(exp_node, NULL, label1);
         Stmt_gen(AST_getChild(cur_node, 4));
@@ -664,8 +688,8 @@ void Stmt_gen(struct AST_Node *cur_node)
             newIntercode(LABEL_I, label1);
         else//IF LP Exp RP Stmt1 ELSE Stmt2
         {
-            Operand label2 = createOP(LABEL, VARIABLE_O);
-            newIntercode(GOTO, label2);
+            Operand label2 = createOP(LABEL_O, VARIABLE_O);
+            newIntercode(GOTO_I, label2);
             newIntercode(LABEL_I, label1);
             Stmt_gen(AST_getChild(cur_node, 6));
             newIntercode(LABEL_I, label2);
@@ -720,7 +744,7 @@ void Dec_gen(struct AST_Node *cur_node)
     if (AST_getChild(cur_node, 1) != NULL)
     {
         Operand op2 = Exp_gen(AST_getChild(cur_node, 2));
-        newIntercode(ASSIGN, op1, op2);
+        newIntercode(ASSIGN_I, op1, op2);
     }
 
     return;
@@ -744,8 +768,8 @@ Operand VarDec_gen(struct AST_Node *cur_node)
     int typesize = gettypesize(my_id->type);
     if (gettypesize(my_id->type) != 4)//结构体与数组情况，需要分配空间。
     {
-        Operand op = createOP(CONSTANT, 1, typesize);
-        newIntercode(DEC, result, op);
+        Operand op = createOP(CONSTANT_O, 1, typesize);
+        newIntercode(DEC_I, result, op);
     }
 
     return result;
@@ -776,7 +800,7 @@ void FunDec_gen(struct AST_Node *cur_node)
             ST_node query_paras = find_symbol(paras->name, __INT_MAX__);
             query_paras->var_no = paraop->u.var_no;
             query_paras->ifaddress = paraop->u.address_ornot;
-            newIntercode(PARAM, paraop);
+            newIntercode(PARAM_I, paraop);
             paras = paras->tail;
         }
     }
@@ -809,7 +833,7 @@ void Arg_gen(struct AST_Node *cur_node, FieldList para)
     if (AST_getChild(cur_node, 1) != NULL)
         Arg_gen(AST_getChild(cur_node, 2), para->tail);
     
-    newIntercode(ARGS, exp_op);
+    newIntercode(ARGS_I, exp_op);
     return;
 }
 
@@ -841,30 +865,30 @@ Operand Exp_ID(struct AST_Node *cur_node)
                 Operand output=NULL;
                 if(strcmp(output_node->name,"Exp")==0)
                     output=Exp_gen(output_node);
-                newIntercode(WRITE, output);
-                ret_op=createOP(TEMPVAR,1);
-                newIntercode(ASSIGN,ret_op,createOP(CONSTANT,1,0));
+                newIntercode(WRITE_I, output);
+                ret_op=createOP(TEMPVAR_O,1);
+                newIntercode(ASSIGN_I,ret_op,createOP(CONSTANT_O,1,0));
 
                 return ret_op;
             }else{
                 Operand functionname=createOP(FUNCTION_O,1,ID->is_string);
                 ST_node id_node=find_symbol(ID->is_string, __INT_MAX__);
                 Arg_gen(Args,id_node->type->u.function.paras);
-                newIntercode(CALL,ret_op,functionname);
+                newIntercode(CALL_I,ret_op,functionname);
                 return ret_op;
             }
         }else{ // Args = RP   
             
-            ret_op=createOP(TEMPVAR,1);
+            ret_op=createOP(TEMPVAR_O,1);
             
             if(strcmp(ID->is_string,"read")==0){
                 
-                newIntercode(READ,ret_op);
+                newIntercode(READ_I,ret_op);
                 return ret_op;
             }
             
             Operand functionname=createOP(FUNCTION_O,1,ID->is_string);
-            newIntercode(CALL,ret_op,functionname);
+            newIntercode(CALL_I,ret_op,functionname);
             return ret_op;
         }
         
@@ -886,14 +910,14 @@ Operand Exp_Exp(struct AST_Node *cur_node)
     ){
         int in_kind;
         if (strcmp(OP_node->name, "PLUS") == 0)
-            in_kind = ADD;
+            in_kind = ADD_I;
         else if (strcmp(OP_node->name, "MINUS") == 0)
-            in_kind = SUB;
+            in_kind = SUB_I;
         else if (strcmp(OP_node->name, "STAR") == 0)
-            in_kind = MUL;
+            in_kind = MUL_I;
         else if (strcmp(OP_node->name, "DIV") == 0)
             in_kind = DIV_I;
-        ret_op=createOP(TEMPVAR,1);
+        ret_op=createOP(TEMPVAR_O,1);
         Operand op1=Exp_gen(Exp1);
         Operand op2=Exp_gen(Exp2);
         newIntercode(in_kind,ret_op,op1,op2);
@@ -921,46 +945,46 @@ Operand Exp_Exp(struct AST_Node *cur_node)
                 int depth2=op2->u.depth;
 
                 int typesize2=gettypesize(queryid2->type);
-                Operand constantop2=createOP(CONSTANT,1,typesize2);
-                Operand four=createOP(CONSTANT,1,4);
+                Operand constantop2=createOP(CONSTANT_O,1,typesize2);
+                Operand four=createOP(CONSTANT_O,1,4);
                 Operand v1=copyOP(op1);
                 if(v1->kind==VARIABLE_O)
                     v1->u.address_ornot=0;
                 Operand v2=copyOP(op2);
                 if(v2->kind==VARIABLE_O)
                     v2->u.address_ornot=0;
-                Operand t1op=createOP(TEMPVAR,1);
-                newIntercode(ASSIGN,t1op,v1);
+                Operand t1op=createOP(TEMPVAR_O,1);
+                newIntercode(ASSIGN_I,t1op,v1);
                 
-                Operand t2op=createOP(TEMPVAR,1);
-                newIntercode(ASSIGN,t2op,v2);			
+                Operand t2op=createOP(TEMPVAR_O,1);
+                newIntercode(ASSIGN_I,t2op,v2);			
                 
                 Operand oriop=createOP(VARIABLE_O,0,op2->u.varible_name);
                 oriop->u.var_no=queryid2->var_no;
 
                 varible_num-=1;
-                Operand endop=createOP(TEMPVAR,1);
-                newIntercode(ADD,endop,oriop,constantop2);
+                Operand endop=createOP(TEMPVAR_O,1);
+                newIntercode(ADD_I,endop,oriop,constantop2);
 
-                Operand labelop1=createOP(LABEL,1);
-                Operand labelop2=createOP(LABEL,1);
+                Operand labelop1=createOP(LABEL_O,1);
+                Operand labelop2=createOP(LABEL_O,1);
 
                 newIntercode(LABEL_I,labelop1);
-                newIntercode(IFGOTO,t2op,">=",endop,labelop2);
+                newIntercode(IFGOTO_I,t2op,">=",endop,labelop2);
                 Operand tempt1op=copyOP(t1op);
                 Operand tempt2op=copyOP(t2op);
                 tempt1op->u.address_ornot=0;
                 tempt2op->u.address_ornot=0;
-                newIntercode(ASSIGN,tempt1op,tempt2op);
-                newIntercode(ADD,t1op,t1op,four);
-                newIntercode(ADD,t2op,t2op,four);
+                newIntercode(ASSIGN_I,tempt1op,tempt2op);
+                newIntercode(ADD_I,t1op,t1op,four);
+                newIntercode(ADD_I,t2op,t2op,four);
 
-                newIntercode(GOTO,labelop1);
+                newIntercode(GOTO_I,labelop1);
                 newIntercode(LABEL_I,labelop2);
 
 
             }else if(op1!=NULL&&op2!=NULL)
-                newIntercode(ASSIGN,op1,op2);
+                newIntercode(ASSIGN_I,op1,op2);
         return op1;
     }
     else if(strcmp(OP_node->name,"DOT")==0){
@@ -969,13 +993,13 @@ Operand Exp_Exp(struct AST_Node *cur_node)
         ST_node queryid=find_symbol(Exp2->is_string,__INT_MAX__);
         int offset=queryid->offset;
 
-        Operand ttemp=createOP(TEMPVAR,1);
+        Operand ttemp=createOP(TEMPVAR_O,1);
         temp_expop->u.address_ornot = !temp_expop->u.address_ornot;
         if(offset==0)
-            newIntercode(ASSIGN,ttemp,temp_expop);
+            newIntercode(ASSIGN_I,ttemp,temp_expop);
         else{
-            Operand constantop=createOP(CONSTANT,1,offset);
-            newIntercode(ADD,ttemp,temp_expop,constantop);
+            Operand constantop=createOP(CONSTANT_O,1,offset);
+            newIntercode(ADD_I,ttemp,temp_expop,constantop);
         }
         ret_op=copyOP(ttemp);
         ret_op->u.address_ornot=0;
@@ -1017,11 +1041,11 @@ Operand Exp_Exp(struct AST_Node *cur_node)
         struct AST_Node* index_node=OP_node->next_sib;
         Operand expop2=Exp_gen(index_node);
         
-        Operand tempop1=createOP(TEMPVAR,1);
-        Operand constantop1=createOP(CONSTANT,1,offset);
-        newIntercode(MUL,tempop1,expop2,constantop1);
+        Operand tempop1=createOP(TEMPVAR_O,1);
+        Operand constantop1=createOP(CONSTANT_O,1,offset);
+        newIntercode(MUL_I,tempop1,expop2,constantop1);
 
-        Operand tempop2=createOP(TEMPVAR,1);
+        Operand tempop2=createOP(TEMPVAR_O,1);
         tempop2->u.varible_name=exp_op1->u.varible_name;
         tempop2->u.depth=depth+1;
         if(depth==0&&exp_op1->u.address_ornot==1){
@@ -1029,7 +1053,7 @@ Operand Exp_Exp(struct AST_Node *cur_node)
         }else{
             exp_op1->u.address_ornot=1;
         }
-        newIntercode(ADD,tempop2,exp_op1,tempop1);
+        newIntercode(ADD_I,tempop2,exp_op1,tempop1);
 
         ret_op=copyOP(tempop2);
         if(tempop2->u.depth==cnt)
@@ -1044,7 +1068,7 @@ Operand Exp_gen(struct AST_Node *cur_node){
     // printf("here1\n");
     if(strcmp(case_node->name,"INT")==0){
         // printf("here1\n");
-        return createOP(CONSTANT,1,case_node->is_int);
+        return createOP(CONSTANT_O,1,case_node->is_int);
     }
     else if(strcmp(case_node->name,"LP")==0){
         // printf("here2\n");
@@ -1054,9 +1078,9 @@ Operand Exp_gen(struct AST_Node *cur_node){
     else if(strcmp(case_node->name,"MINUS")==0){
 		// printf("here3\n");
         Operand op1=Exp_gen(case_node->next_sib);
-        Operand zero=createOP(CONSTANT,1,0);
-		Operand op2=createOP(TEMPVAR,1);
-		newIntercode(SUB, op2, zero, op1);
+        Operand zero=createOP(CONSTANT_O,1,0);
+		Operand op2=createOP(TEMPVAR_O,1);
+		newIntercode(SUB_I, op2, zero, op1);
         return op2;
     }
     else if(strcmp(case_node->name,"NOT")==0||
@@ -1066,14 +1090,14 @@ Operand Exp_gen(struct AST_Node *cur_node){
             ||strcmp(case_node->next_sib->name,"OR")==0)))
 	{
         // printf("here4\n");
-		Operand label1=createOP(LABEL, 1);
-		Operand label2=createOP(LABEL, 1);
+		Operand label1=createOP(LABEL_O, 1);
+		Operand label2=createOP(LABEL_O, 1);
 
-		Operand ret_op=createOP(TEMPVAR,1);
-		newIntercode(ASSIGN,ret_op,createOP(CONSTANT,1,0));
+		Operand ret_op=createOP(TEMPVAR_O,1);
+		newIntercode(ASSIGN_I,ret_op,createOP(CONSTANT_O,1,0));
 		Cond_gen(cur_node,label1,label2);
 		newIntercode(LABEL_I,label1);
-		newIntercode(ASSIGN,ret_op,createOP(CONSTANT,1,1));
+		newIntercode(ASSIGN_I,ret_op,createOP(CONSTANT_O,1,1));
 		newIntercode(LABEL_I,label2);
 		return ret_op;
 	}
@@ -1088,7 +1112,7 @@ Operand Exp_gen(struct AST_Node *cur_node){
 }
 
 void Cond_gen(struct AST_Node* cur_node,Operand label_true,Operand label_false){
-	Operand zero=createOP(CONSTANT,1,0);
+	Operand zero=createOP(CONSTANT_O,1,0);
     
     struct AST_Node* case_node=cur_node->child;
     if(strcmp(case_node->name,"Exp")==0){
@@ -1098,17 +1122,17 @@ void Cond_gen(struct AST_Node* cur_node,Operand label_true,Operand label_false){
             struct AST_Node* Exp2 = OP_node->next_sib;
             Operand op1=Exp_gen(Exp1);
             Operand op2=Exp_gen(Exp2);
-            newIntercode(ASSIGN,op1,op2);
+            newIntercode(ASSIGN_I,op1,op2);
             if(label_true!=NULL&&label_false!=NULL){
                 if(op1!=NULL)
-                    newIntercode(IFGOTO,op1,"!=",zero,label_true);
-                newIntercode(GOTO,label_false);
+                    newIntercode(IFGOTO_I,op1,"!=",zero,label_true);
+                newIntercode(GOTO_I,label_false);
             }else if(label_true!=NULL){
                 if(op1!=NULL)
-                    newIntercode(IFGOTO,op1,"!=",zero,label_true);
+                    newIntercode(IFGOTO_I,op1,"!=",zero,label_true);
             }else if(label_false!=NULL){
                 if(op1!=NULL)
-                    newIntercode(IFGOTO,op1,"==",zero,label_false);
+                    newIntercode(IFGOTO_I,op1,"==",zero,label_false);
             }
 
         }else if(strcmp(OP_node->name,"AND")==0){
@@ -1117,7 +1141,7 @@ void Cond_gen(struct AST_Node* cur_node,Operand label_true,Operand label_false){
                 Cond_gen(Exp1,NULL,label_false);
                 Cond_gen(Exp2,label_true,label_false);		
             }else{
-                Operand new_label=createOP(LABEL,1);
+                Operand new_label=createOP(LABEL_O,1);
                 Cond_gen(Exp1,NULL,new_label);
                 Cond_gen(Exp2,label_true,label_false);
                 newIntercode(LABEL_I,new_label);
@@ -1128,7 +1152,7 @@ void Cond_gen(struct AST_Node* cur_node,Operand label_true,Operand label_false){
                 Cond_gen(Exp1,label_true,NULL);
                 Cond_gen(Exp2,label_true,label_false);
             }else{
-                Operand new_label=createOP(LABEL,1);
+                Operand new_label=createOP(LABEL_O,1);
                 Cond_gen(Exp1,new_label,NULL);
                 Cond_gen(Exp2,label_true,label_false);
                 newIntercode(LABEL_I,new_label);			
@@ -1139,32 +1163,32 @@ void Cond_gen(struct AST_Node* cur_node,Operand label_true,Operand label_false){
 
             if(label_true!=NULL&&label_false!=NULL){
                 if(op1!=NULL)
-                newIntercode(IFGOTO,op1,OP_node->is_string,op2,label_true);
-                newIntercode(GOTO,label_false);
+                newIntercode(IFGOTO_I,op1,OP_node->is_string,op2,label_true);
+                newIntercode(GOTO_I,label_false);
             }else if(label_true!=NULL){
                 if(op1!=NULL)
-                newIntercode(IFGOTO,op1,OP_node->is_string,op2,label_true);					
+                newIntercode(IFGOTO_I,op1,OP_node->is_string,op2,label_true);					
             }else if(label_false!=NULL){
                 if(op1!=NULL){
                     if(strcmp(OP_node->is_string, ">")==0){
-                        newIntercode(IFGOTO,op1,"<=",op2,label_false);
+                        newIntercode(IFGOTO_I,op1,"<=",op2,label_false);
                     }
                     else if(strcmp(OP_node->is_string, "<")==0){
-                        newIntercode(IFGOTO,op1,">=",op2,label_false);
+                        newIntercode(IFGOTO_I,op1,">=",op2,label_false);
                     }
                     else if(strcmp(OP_node->is_string, ">=")==0){
-                        newIntercode(IFGOTO,op1,"<",op2,label_false);
+                        newIntercode(IFGOTO_I,op1,"<",op2,label_false);
                     }
                     else if(strcmp(OP_node->is_string, "<=")==0){
-                        newIntercode(IFGOTO,op1,">",op2,label_false);
+                        newIntercode(IFGOTO_I,op1,">",op2,label_false);
                     }
                     else if(strcmp(OP_node->is_string, "!=")==0){
-                        newIntercode(IFGOTO,op1,"==",op2,label_false);
+                        newIntercode(IFGOTO_I,op1,"==",op2,label_false);
                     }
                     else if(strcmp(OP_node->is_string, "==")==0){
-                        newIntercode(IFGOTO,op1,"!=",op2,label_false);
+                        newIntercode(IFGOTO_I,op1,"!=",op2,label_false);
                     }
-                    else newIntercode(IFGOTO,op1,NULL,op2,label_false);
+                    else newIntercode(IFGOTO_I,op1,NULL,op2,label_false);
                 }
             }
         }else if(strcmp(OP_node->name,"PLUS") == 0||strcmp(OP_node->name,"DIV")==0||strcmp(OP_node->name,"STAR")==0||strcmp(OP_node->name,"MINUS")==0){
@@ -1172,34 +1196,34 @@ void Cond_gen(struct AST_Node* cur_node,Operand label_true,Operand label_false){
             Operand op2=Exp_gen(OP_node->next_sib);
             int in_kind;
             if (strcmp(OP_node->name, "PLUS") == 0)
-                in_kind = ADD;
+                in_kind = ADD_I;
             else if (strcmp(OP_node->name, "MINUS") == 0)
-                in_kind = SUB;
+                in_kind = SUB_I;
             else if (strcmp(OP_node->name, "STAR") == 0)
-                in_kind = MUL;
+                in_kind = MUL_I;
             else if (strcmp(OP_node->name, "DIV") == 0)
                 in_kind = DIV_I;
-            Operand result=createOP(TEMPVAR,1);		
+            Operand result=createOP(TEMPVAR_O,1);		
             if(op1!=NULL&&op2!=NULL)
                 newIntercode(in_kind,result,op1,op2);
             
             if(label_true!=NULL&&label_false!=NULL){
-                newIntercode(IFGOTO,result,"!=",zero,label_true);
-                newIntercode(GOTO,label_false);
+                newIntercode(IFGOTO_I,result,"!=",zero,label_true);
+                newIntercode(GOTO_I,label_false);
             }
             else if(label_true!=NULL)
-                newIntercode(IFGOTO,result,"!=",zero,label_true);
+                newIntercode(IFGOTO_I,result,"!=",zero,label_true);
             else if(label_false!=NULL)
-                newIntercode(IFGOTO,result,"==",zero,label_false);
+                newIntercode(IFGOTO_I,result,"==",zero,label_false);
         }else if(strcmp(OP_node->name,"LB")==0 || strcmp(OP_node->name,"DOT")==0){
             Operand op=Exp_gen(cur_node);
             if(label_true!=NULL&&label_false!=NULL){
-                newIntercode(IFGOTO,op,"!=",zero,label_true);
-                newIntercode(GOTO,label_false);
+                newIntercode(IFGOTO_I,op,"!=",zero,label_true);
+                newIntercode(GOTO_I,label_false);
             }else if(label_true!=NULL){
-                newIntercode(IFGOTO,op,"!=",zero,label_true);
+                newIntercode(IFGOTO_I,op,"!=",zero,label_true);
             }else if(label_false!=NULL){
-                newIntercode(IFGOTO,op,"==",zero,label_false);
+                newIntercode(IFGOTO_I,op,"==",zero,label_false);
             }
         }
 
@@ -1208,31 +1232,31 @@ void Cond_gen(struct AST_Node* cur_node,Operand label_true,Operand label_false){
     else if(strcmp(case_node->name,"MINUS")==0){
         Operand op=Exp_gen(cur_node);
         if(label_true!=NULL&&label_false!=NULL){
-            newIntercode(IFGOTO,op,"!=",zero,label_true);
-            newIntercode(GOTO,label_false);
+            newIntercode(IFGOTO_I,op,"!=",zero,label_true);
+            newIntercode(GOTO_I,label_false);
         }else if(label_true!=NULL){
-            newIntercode(IFGOTO,op,"!=",zero,label_true);
+            newIntercode(IFGOTO_I,op,"!=",zero,label_true);
         }else if(label_false!=NULL){
-            newIntercode(IFGOTO,op,"==",zero,label_false);
+            newIntercode(IFGOTO_I,op,"==",zero,label_false);
         }
     }else if(strcmp(case_node->name,"LP")==0){
         Cond_gen(case_node->next_sib,label_true,label_false);
     }else if(strcmp(case_node->name,"ID")==0){
         Operand op=Exp_gen(cur_node);
         if(label_true!=NULL&&label_false!=NULL){
-            newIntercode(IFGOTO,op,"!=",zero,label_true);
-            newIntercode(GOTO,label_false);
+            newIntercode(IFGOTO_I,op,"!=",zero,label_true);
+            newIntercode(GOTO_I,label_false);
         }else if(label_true!=NULL){
-            newIntercode(IFGOTO,op,"!=",zero,label_true);
+            newIntercode(IFGOTO_I,op,"!=",zero,label_true);
         }else if(label_false!=NULL){
-            newIntercode(IFGOTO,op,"==",zero,label_false);
+            newIntercode(IFGOTO_I,op,"==",zero,label_false);
         }
 
     }else if(strcmp(case_node->name,"INT")==0){
         if(label_true!=NULL&&case_node->is_int)
-            newIntercode(GOTO,label_true);
+            newIntercode(GOTO_I,label_true);
         if(label_false!=NULL&&!case_node->is_int)
-            newIntercode(GOTO,label_false);
+            newIntercode(GOTO_I,label_false);
     }
 	return;
 }
