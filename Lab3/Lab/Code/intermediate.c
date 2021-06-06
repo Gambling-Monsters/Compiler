@@ -19,6 +19,7 @@ struct Operand_ {
         int address_ornot;
         char *varible_name;
         char *function_name;
+        char *tempvar_name;
     } u;
 };
 
@@ -95,25 +96,21 @@ Operand createOP(int new_opkind, int new_opaddress, ...)
     case (CONSTANT_O):
     {
         init_operand->u.value = va_arg(args, int);
-        init_operand->u.varible_name = NULL;
         break;
     }
     case (FUNCTION_O):
     {
         init_operand->u.function_name = va_arg(args, char *);
-        init_operand->u.varible_name = NULL;
         break;
     }
     case (LABEL_O):
     {
         init_operand->u.var_no = label_num++;
-        init_operand->u.varible_name = NULL;
         break;
     }
     case (TEMPVAR_O):
     {
         init_operand->u.var_no = tempvar_num++;
-        init_operand->u.varible_name = NULL;
         break;
     }
     }
@@ -144,12 +141,11 @@ void printOP(Operand op, FILE *file)
     {
         if (!op->u.address_ornot)//取址
         {
-            fprintf(file, "&");
-            fprintf(file, "varible_%d", op->u.var_no);
+            fprintf(file, "&variable_%d", op->u.var_no);
         }
         else
         {
-            fprintf(file, "varible_%d", op->u.var_no);
+            fprintf(file, "variable_%d", op->u.var_no);
         }
             
         break;
@@ -173,12 +169,11 @@ void printOP(Operand op, FILE *file)
     {
         if (!op->u.address_ornot)//解引用
         {
-            fprintf(file, "*");
-            fprintf(file, "tempvar_%d", op->u.var_no+1);
+            fprintf(file, "*tempvar_%d", op->u.var_no);
         }
         else
         {
-            fprintf(file, "tempvar_%d", op->u.var_no+1);
+            fprintf(file, "tempvar_%d", op->u.var_no);
         }
         break;
     }
@@ -193,84 +188,11 @@ void printIntercode(FILE *file)
     {
         switch (p1->code.kind)
         {
-        case (FUNCTION_I):
-        {
-            fprintf(file, "FUNCTION ");
-            printOP(p1->code.u.function.result, file);
-            fprintf(file, " : \n");
-            break;
-        }
-        case (PARAM_I):
-        {
-            fprintf(file, "PARAM ");
-            printOP(p1->code.u.param.result, file);
-            fprintf(file, "\n");
-            break;
-        }
-        case (RETURN_I):
-        {
-            fprintf(file, "RETURN ");
-            printOP(p1->code.u.return_u.result, file);
-            fprintf(file, "\n");
-            break;
-        }
-        case (LABEL_I):
-        {
-            fprintf(file, "LABEL label");
-            printOP(p1->code.u.label.result, file);
-            fprintf(file, " : \n");
-            break;
-        }
-        case (GOTO_I):
-        {
-            fprintf(file, "GOTO label");
-            printOP(p1->code.u.goto_u.result, file);
-            fprintf(file, "\n");
-            break;
-        }
-        case (WRITE_I):
-        {
-            fprintf(file, "WRITE ");
-            printOP(p1->code.u.write.result, file);
-            fprintf(file, "\n");
-            break;
-        }
-        case (READ_I):
-        {
-            fprintf(file, "READ ");
-            printOP(p1->code.u.read.result, file);
-            fprintf(file, "\n");
-            break;
-        }
-        case (ARGS_I):
-        {
-            fprintf(file, "ARG ");
-            printOP(p1->code.u.args.result, file);
-            fprintf(file, " \n");
-            break;
-        }
         case (ASSIGN_I):
         {
             printOP(p1->code.u.assign.left, file);
             fprintf(file, " := ");
             printOP(p1->code.u.assign.right, file);
-            fprintf(file, "\n");
-            break;
-        }
-        case (DEC_I):
-        {
-            fprintf(file, "DEC ");
-            printOP(p1->code.u.dec.op, file);
-            fprintf(file, " %d", p1->code.u.dec.result->u.value);
-            fprintf(file, "\n");
-            break;
-        }
-        case (CALL_I):
-        {
-            printOP(p1->code.u.call.op, file);
-            fprintf(file, " := CALL ");
-            printOP(p1->code.u.call.result, file);
-            fprintf(file, "\n");
             break;
         }
         case (ADD_I):
@@ -280,7 +202,6 @@ void printIntercode(FILE *file)
             printOP(p1->code.u.binop.op1, file);
             fprintf(file, " + ");
             printOP(p1->code.u.binop.op2, file);
-            fprintf(file, "\n");
             break;
         }
         case (SUB_I):
@@ -290,7 +211,6 @@ void printIntercode(FILE *file)
             printOP(p1->code.u.binop.op1, file);
             fprintf(file, " - ");
             printOP(p1->code.u.binop.op2, file);
-            fprintf(file, "\n");
             break;
         }
         case (MUL_I):
@@ -300,7 +220,6 @@ void printIntercode(FILE *file)
             printOP(p1->code.u.binop.op1, file);
             fprintf(file, " * ");
             printOP(p1->code.u.binop.op2, file);
-            fprintf(file, "\n");
             break;
         }
         case (DIV_I):
@@ -310,7 +229,52 @@ void printIntercode(FILE *file)
             printOP(p1->code.u.binop.op1, file);
             fprintf(file, " / ");
             printOP(p1->code.u.binop.op2, file);
-            fprintf(file, "\n");
+            break;
+        }
+        case (FUNCTION_I):
+        {
+            fprintf(file, "FUNCTION ");
+            printOP(p1->code.u.function.result, file);
+            fprintf(file, " : ");
+            break;
+        }
+        case (PARAM_I):
+        {
+            fprintf(file, "PARAM ");
+            printOP(p1->code.u.param.result, file);
+            break;
+        }
+        case (RETURN_I):
+        {
+            fprintf(file, "RETURN ");
+            printOP(p1->code.u.return_u.result, file);
+            break;
+        }
+        case (CALL_I):
+        {
+            printOP(p1->code.u.call.op, file);
+            fprintf(file, " := CALL ");
+            printOP(p1->code.u.call.result, file);
+            break;
+        }
+        case (DEC_I):
+        {
+            fprintf(file, "DEC ");
+            printOP(p1->code.u.dec.op, file);
+            fprintf(file, " %d", p1->code.u.dec.result->u.value);
+            break;
+        }
+        case (LABEL_I):
+        {
+            fprintf(file, "LABEL label");
+            printOP(p1->code.u.label.result, file);
+            fprintf(file, " : ");
+            break;
+        }
+        case (GOTO_I):
+        {
+            fprintf(file, "GOTO label");
+            printOP(p1->code.u.goto_u.result, file);
             break;
         }
         case (IFGOTO_I):
@@ -321,11 +285,30 @@ void printIntercode(FILE *file)
             printOP(p1->code.u.ifgoto.op1, file);
             fprintf(file, " GOTO label");
             printOP(p1->code.u.ifgoto.op2, file);
-            fprintf(file, "\n");
             break;
         }
+        case (ARGS_I):
+        {
+            fprintf(file, "ARG ");
+            printOP(p1->code.u.args.result, file);
+            fprintf(file, " ");
+            break;
+        }
+        case (READ_I):
+        {
+            fprintf(file, "READ ");
+            printOP(p1->code.u.read.result, file);
+            break;
+        }
+        case (WRITE_I):
+        {
+            fprintf(file, "WRITE ");
+            printOP(p1->code.u.write.result, file);
+            break;
+        }  
         }
         p1 = p1->next;
+        fprintf(file, "\n");
     }
     fclose(file);
 }
@@ -341,63 +324,10 @@ void newIntercode(int kind, ...)
 
     switch (kind)
     {
-        case FUNCTION_I:
-        {
-            p1->code.u.function.result = va_arg(args, Operand);
-            break;
-        }
-        case PARAM_I:
-        {
-            p1->code.u.param.result = va_arg(args, Operand);
-            break;
-        }
-        case RETURN_I:
-        {
-            p1->code.u.return_u.result = va_arg(args, Operand);
-            break;
-        }
-        case LABEL_I:
-        {
-            p1->code.u.label.result = va_arg(args, Operand);
-            break;
-        }
-        case GOTO_I:
-        {
-            p1->code.u.goto_u.result = va_arg(args, Operand);
-            break;
-        }
-        case WRITE_I:
-        {
-            p1->code.u.write.result = va_arg(args, Operand);
-            break;
-        }
-        case READ_I:
-        {
-            p1->code.u.read.result = va_arg(args, Operand);
-            break;
-        }
-        case ARGS_I:
-        {
-            p1->code.u.args.result = va_arg(args, Operand);
-            break;
-        }
-
         case ASSIGN_I:
         {
             p1->code.u.assign.left = va_arg(args, Operand);
             p1->code.u.assign.right = va_arg(args, Operand);
-            break;
-        }
-        case DEC_I:
-        {
-            p1->code.u.dec.op = va_arg(args, Operand);
-            p1->code.u.dec.result = va_arg(args, Operand);
-            break;
-        }
-        case CALL_I:
-        {
-            p1->code.u.call.op = va_arg(args, Operand);
-            p1->code.u.call.result = va_arg(args, Operand);
             break;
         }
         case ADD_I:
@@ -428,12 +358,65 @@ void newIntercode(int kind, ...)
             p1->code.u.binop.op2 = va_arg(args, Operand);
             break;
         }
+        case FUNCTION_I:
+        {
+            p1->code.u.function.result = va_arg(args, Operand);
+            break;
+        }
+        case PARAM_I:
+        {
+            p1->code.u.param.result = va_arg(args, Operand);
+            break;
+        }
+        case RETURN_I:
+        {
+            p1->code.u.return_u.result = va_arg(args, Operand);
+            break;
+        }
+        case CALL_I:
+        {
+            p1->code.u.call.op = va_arg(args, Operand);
+            p1->code.u.call.result = va_arg(args, Operand);
+            break;
+        }
+        case DEC_I:
+        {
+            p1->code.u.dec.op = va_arg(args, Operand);
+            p1->code.u.dec.result = va_arg(args, Operand);
+            break;
+        }
+        case LABEL_I:
+        {
+            p1->code.u.label.result = va_arg(args, Operand);
+            break;
+        }
+        case GOTO_I:
+        {
+            p1->code.u.goto_u.result = va_arg(args, Operand);
+            break;
+        }
         case IFGOTO_I:
         {
             p1->code.u.ifgoto.result = va_arg(args, Operand);
             p1->code.u.ifgoto.mrk = va_arg(args, char *);
             p1->code.u.ifgoto.op1 = va_arg(args, Operand);
             p1->code.u.ifgoto.op2 = va_arg(args, Operand);
+            break;
+        }
+        case ARGS_I:
+        {
+            p1->code.u.args.result = va_arg(args, Operand);
+            break;
+        }
+        case READ_I:
+        {
+            p1->code.u.read.result = va_arg(args, Operand);
+            break;
+        }
+        case WRITE_I:
+        {
+            p1->code.u.write.result = va_arg(args, Operand);
+            break;
         }
     }
     p1->prev = tail_code;
