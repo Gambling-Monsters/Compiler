@@ -559,12 +559,12 @@ void CompSt_gen(struct AST_Node *cur_node)
     // CompSt -> LC DefList StmtList RC
     // DefList -> Def DefList
     // | (empty)
-    struct AST_Node *temp = AST_getChild(cur_node, 1);
+    struct AST_Node *temp = cur_node->child->next_sib;
     
     if (strcmp(temp->name, "DefList") == 0)
     {
         DefList_gen(temp);
-        struct AST_Node *SL_node = AST_getChild(cur_node, 2);
+        struct AST_Node *SL_node = temp->next_sib;
         
         if (strcmp(SL_node->name, "StmtList") == 0)   
             StmtList_gen(SL_node);
@@ -585,7 +585,7 @@ void StmtList_gen(struct AST_Node *cur_node)
     
     Stmt_gen(cur_node->child);
     
-    struct AST_Node *temp = AST_getChild(cur_node, 1);
+    struct AST_Node *temp = cur_node->child->next_sib;
     if (temp != NULL)
         StmtList_gen(temp);
 
@@ -601,18 +601,12 @@ void Stmt_gen(struct AST_Node *cur_node)
     // | IF LP Exp RP Stmt | IF LP Exp RP Stmt1 ELSE Stmt2
     
     struct AST_Node *temp = cur_node->child;
-    if(strcmp(temp->name, "Exp") == 0){
+    if(strcmp(temp->name, "Exp") == 0)
         Exp_gen(temp);
-    }
-    else if (strcmp(temp->name, "CompSt") == 0){
+    else if (strcmp(temp->name, "CompSt") == 0)
         CompSt_gen(temp);
-    }
     else if (strcmp(temp->name, "RETURN") == 0)
-    {
-        struct AST_Node *exp_node = AST_getChild(cur_node, 1);
-        Operand exp_op = Exp_gen(exp_node);
-        newIntercode(RETURN_I, exp_op);
-    }
+        newIntercode(RETURN_I, Exp_gen(temp->next_sib));
     else if (strcmp(temp->name, "WHILE") == 0)
     {
         //goto() optimization in WHILE
@@ -712,11 +706,8 @@ void Dec_gen(struct AST_Node *cur_node)
     
     struct AST_Node *VD_node = cur_node->child;
     Operand op1 = VarDec_gen(VD_node);
-    if (AST_getChild(cur_node, 1) != NULL)
-    {
-        Operand op2 = Exp_gen(AST_getChild(cur_node, 2));
-        newIntercode(ASSIGN_I, op1, op2);
-    }
+    if (VD_node->next_sib != NULL)
+        newIntercode(ASSIGN_I, op1, Exp_gen(AST_getChild(cur_node, 2)));
 
     return;
 }
