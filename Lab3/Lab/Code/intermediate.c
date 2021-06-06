@@ -510,7 +510,6 @@ void Program_gen(struct AST_Node *cur_node)
     //Program -> ExfDefList
 
     struct AST_Node * temp_node0 = cur_node->child;
-    // printf("here\n");
     
     ExtDefList_gen(cur_node->child);
     
@@ -548,12 +547,8 @@ void ExtDef_gen(struct AST_Node *cur_node)
     
     if (strcmp(FD_node->name, "FunDec") == 0 && strcmp(CS_node->name, "CompSt")==0)
     {
-        
-        // printf("here\n");
         FunDec_gen(FD_node);
-         
         CompSt_gen(CS_node);
-        
     }
 
     return;
@@ -565,25 +560,17 @@ void CompSt_gen(struct AST_Node *cur_node)
     // DefList -> Def DefList
     // | (empty)
     struct AST_Node *temp = AST_getChild(cur_node, 1);
-    // printf("here\n");
     
     if (strcmp(temp->name, "DefList") == 0)
     {
         DefList_gen(temp);
         struct AST_Node *SL_node = AST_getChild(cur_node, 2);
-        // printf("here\n");
         
-        if (strcmp(SL_node->name, "StmtList") == 0){
-            
+        if (strcmp(SL_node->name, "StmtList") == 0)   
             StmtList_gen(SL_node);
-            // printf("here1\n");
-        }
     }
     else if (strcmp(temp->name, "StmtList")==0) //DefList is empty
-    {
-        // printf("here2\n");
         StmtList_gen(temp);
-    }
         
     
     return;
@@ -595,11 +582,9 @@ void StmtList_gen(struct AST_Node *cur_node)
     // | empty
 
     if(cur_node == NULL) return;
-    // printf("here\n");
     
     Stmt_gen(cur_node->child);
     
-    // printf("here\n");
     struct AST_Node *temp = AST_getChild(cur_node, 1);
     if (temp != NULL)
         StmtList_gen(temp);
@@ -826,14 +811,12 @@ void Arg_gen(struct AST_Node *cur_node, FieldList para)
 
 Operand Exp_ID(struct AST_Node *cur_node)
 {
-    // printf("herecond\n");
     Operand ret_op = NULL;
     struct AST_Node* ID = cur_node->child;
     struct AST_Node* LP = ID->next_sib;
     
     if(LP == NULL)
     {
-        //  printf("hereid1\n");
         ST_node ID_node = find_symbol(ID->is_string, __INT_MAX__);
         ret_op=createOP(VARIABLE_O,ID_node->address_ornot,ID->is_string);
         varible_num--;
@@ -842,11 +825,9 @@ Operand Exp_ID(struct AST_Node *cur_node)
         return ret_op;
     }else
     {
-        // printf("hereid2\n");
         struct AST_Node* Args = LP->next_sib;
         if(strcmp(Args->name,"Args")==0)
         {
-            // printf("hereid1\n");
             if(strcmp(ID->is_string,"write")==0){
                 struct AST_Node* output_node=Args->child;
                 Operand output=NULL;
@@ -1053,18 +1034,12 @@ Operand Exp_Exp(struct AST_Node *cur_node)
 Operand Exp_gen(struct AST_Node *cur_node){
 
     struct AST_Node* case_node = cur_node->child;
-    // printf("here1\n");
-    if(strcmp(case_node->name,"INT")==0){
-        // printf("here1\n");
+    if(strcmp(case_node->name,"INT")==0)
         return createOP(CONSTANT_O,1,case_node->is_int);
-    }
-    else if(strcmp(case_node->name,"LP")==0){
-        // printf("here2\n");
+    else if(strcmp(case_node->name,"LP")==0)
         return Exp_gen(AST_getChild(cur_node,1));
-    }
         
     else if(strcmp(case_node->name,"MINUS")==0){
-		// printf("here3\n");
         Operand op1=Exp_gen(case_node->next_sib);
         Operand zero=createOP(CONSTANT_O,1,0);
 		Operand op2=createOP(TEMPVAR_O,1);
@@ -1077,7 +1052,6 @@ Operand Exp_gen(struct AST_Node *cur_node){
             ||strcmp(case_node->next_sib->name,"AND")==0
             ||strcmp(case_node->next_sib->name,"OR")==0)))
 	{
-        // printf("here4\n");
 		Operand label1=createOP(LABEL_O, 1);
 		Operand label2=createOP(LABEL_O, 1);
 
@@ -1089,13 +1063,10 @@ Operand Exp_gen(struct AST_Node *cur_node){
 		newIntercode(LABEL_I,label2);
 		return ret_op;
 	}
-    else if(strcmp(case_node->name,"ID") == 0){
+    else if(strcmp(case_node->name,"ID") == 0)
         return Exp_ID(cur_node);
-    }
-    else if(strcmp(case_node->name,"Exp") == 0){
-        // printf("here6\n");
+    else if(strcmp(case_node->name,"Exp") == 0)
         return Exp_Exp(cur_node);
-    }
         
 }
 
@@ -1103,27 +1074,11 @@ void Cond_gen(struct AST_Node* cur_node,Operand label_true,Operand label_false){
 	Operand zero=createOP(CONSTANT_O,1,0);
     
     struct AST_Node* case_node=cur_node->child;
-    if(strcmp(case_node->name,"Exp")==0){
+    if(strcmp(case_node->name,"Exp")==0 && (!strcmp(case_node->next_sib->name,"AND") ||
+        !strcmp(case_node->next_sib->name,"OR") || !strcmp(case_node->next_sib->name,"RELOP"))){
         struct AST_Node* Exp1=cur_node->child;
         struct AST_Node* OP_node=case_node->next_sib;
-        if(strcmp(OP_node->name,"ASSIGNOP")==0){
-            struct AST_Node* Exp2 = OP_node->next_sib;
-            Operand op1=Exp_gen(Exp1);
-            Operand op2=Exp_gen(Exp2);
-            newIntercode(ASSIGN_I,op1,op2);
-            if(label_true!=NULL&&label_false!=NULL){
-                if(op1!=NULL)
-                    newIntercode(IFGOTO_I,op1,"!=",zero,label_true);
-                newIntercode(GOTO_I,label_false);
-            }else if(label_true!=NULL){
-                if(op1!=NULL)
-                    newIntercode(IFGOTO_I,op1,"!=",zero,label_true);
-            }else if(label_false!=NULL){
-                if(op1!=NULL)
-                    newIntercode(IFGOTO_I,op1,"==",zero,label_false);
-            }
-
-        }else if(strcmp(OP_node->name,"AND")==0){
+        if(strcmp(OP_node->name,"AND")==0){
             struct AST_Node* Exp2 = OP_node->next_sib;
             if(label_false!=NULL){
                 Cond_gen(Exp1,NULL,label_false);
@@ -1146,105 +1101,58 @@ void Cond_gen(struct AST_Node* cur_node,Operand label_true,Operand label_false){
                 newIntercode(LABEL_I,new_label);			
             }
         }else if(strcmp(OP_node->name,"RELOP")==0){
-            Operand op1=Exp_gen(Exp1);
-            Operand op2=Exp_gen(OP_node->next_sib);
+            Operand code1=Exp_gen(Exp1);
+            Operand code2=Exp_gen(OP_node->next_sib);
 
             if(label_true!=NULL&&label_false!=NULL){
-                if(op1!=NULL)
-                newIntercode(IFGOTO_I,op1,OP_node->is_string,op2,label_true);
+                newIntercode(IFGOTO_I,code2,OP_node->is_string,code2,label_true);
                 newIntercode(GOTO_I,label_false);
             }else if(label_true!=NULL){
-                if(op1!=NULL)
-                newIntercode(IFGOTO_I,op1,OP_node->is_string,op2,label_true);					
+                newIntercode(IFGOTO_I,code1,OP_node->is_string,code2,label_true);					
             }else if(label_false!=NULL){
-                if(op1!=NULL){
+                if(code1!=NULL){
                     if(strcmp(OP_node->is_string, ">")==0){
-                        newIntercode(IFGOTO_I,op1,"<=",op2,label_false);
+                        newIntercode(IFGOTO_I,code1,"<=",code2,label_false);
                     }
                     else if(strcmp(OP_node->is_string, "<")==0){
-                        newIntercode(IFGOTO_I,op1,">=",op2,label_false);
+                        newIntercode(IFGOTO_I,code1,">=",code2,label_false);
                     }
                     else if(strcmp(OP_node->is_string, ">=")==0){
-                        newIntercode(IFGOTO_I,op1,"<",op2,label_false);
+                        newIntercode(IFGOTO_I,code1,"<",code2,label_false);
                     }
                     else if(strcmp(OP_node->is_string, "<=")==0){
-                        newIntercode(IFGOTO_I,op1,">",op2,label_false);
+                        newIntercode(IFGOTO_I,code1,">",code2,label_false);
                     }
                     else if(strcmp(OP_node->is_string, "!=")==0){
-                        newIntercode(IFGOTO_I,op1,"==",op2,label_false);
+                        newIntercode(IFGOTO_I,code1,"==",code2,label_false);
                     }
                     else if(strcmp(OP_node->is_string, "==")==0){
-                        newIntercode(IFGOTO_I,op1,"!=",op2,label_false);
+                        newIntercode(IFGOTO_I,code1,"!=",code2,label_false);
                     }
-                    else newIntercode(IFGOTO_I,op1,NULL,op2,label_false);
+                    else newIntercode(IFGOTO_I,code1,NULL,code2,label_false);
                 }
             }
-        }else if(strcmp(OP_node->name,"PLUS") == 0||strcmp(OP_node->name,"DIV")==0||strcmp(OP_node->name,"STAR")==0||strcmp(OP_node->name,"MINUS")==0){
-            Operand op1=Exp_gen(Exp1);
-            Operand op2=Exp_gen(OP_node->next_sib);
-            int in_kind;
-            if (strcmp(OP_node->name, "PLUS") == 0)
-                in_kind = ADD_I;
-            else if (strcmp(OP_node->name, "MINUS") == 0)
-                in_kind = SUB_I;
-            else if (strcmp(OP_node->name, "STAR") == 0)
-                in_kind = MUL_I;
-            else if (strcmp(OP_node->name, "DIV") == 0)
-                in_kind = DIV_I;
-            Operand result=createOP(TEMPVAR_O,1);		
-            if(op1!=NULL&&op2!=NULL)
-                newIntercode(in_kind,result,op1,op2);
-            
-            if(label_true!=NULL&&label_false!=NULL){
-                newIntercode(IFGOTO_I,result,"!=",zero,label_true);
-                newIntercode(GOTO_I,label_false);
-            }
-            else if(label_true!=NULL)
-                newIntercode(IFGOTO_I,result,"!=",zero,label_true);
-            else if(label_false!=NULL)
-                newIntercode(IFGOTO_I,result,"==",zero,label_false);
-        }else if(strcmp(OP_node->name,"LB")==0 || strcmp(OP_node->name,"DOT")==0){
-            Operand op=Exp_gen(cur_node);
-            if(label_true!=NULL&&label_false!=NULL){
-                newIntercode(IFGOTO_I,op,"!=",zero,label_true);
-                newIntercode(GOTO_I,label_false);
-            }else if(label_true!=NULL){
-                newIntercode(IFGOTO_I,op,"!=",zero,label_true);
-            }else if(label_false!=NULL){
-                newIntercode(IFGOTO_I,op,"==",zero,label_false);
-            }
-        }
-
+        }else
+            printf("error in Cond_gen!\n");
     }else if(strcmp(case_node->name,"NOT")==0)
         Cond_gen(case_node->next_sib,label_false,label_true);
-    else if(strcmp(case_node->name,"MINUS")==0){
-        Operand op=Exp_gen(cur_node);
-        if(label_true!=NULL&&label_false!=NULL){
-            newIntercode(IFGOTO_I,op,"!=",zero,label_true);
-            newIntercode(GOTO_I,label_false);
-        }else if(label_true!=NULL){
-            newIntercode(IFGOTO_I,op,"!=",zero,label_true);
-        }else if(label_false!=NULL){
-            newIntercode(IFGOTO_I,op,"==",zero,label_false);
-        }
-    }else if(strcmp(case_node->name,"LP")==0){
+    else if(strcmp(case_node->name,"LP")==0){
         Cond_gen(case_node->next_sib,label_true,label_false);
-    }else if(strcmp(case_node->name,"ID")==0){
-        Operand op=Exp_gen(cur_node);
-        if(label_true!=NULL&&label_false!=NULL){
-            newIntercode(IFGOTO_I,op,"!=",zero,label_true);
-            newIntercode(GOTO_I,label_false);
-        }else if(label_true!=NULL){
-            newIntercode(IFGOTO_I,op,"!=",zero,label_true);
-        }else if(label_false!=NULL){
-            newIntercode(IFGOTO_I,op,"==",zero,label_false);
-        }
-
     }else if(strcmp(case_node->name,"INT")==0){
         if(label_true!=NULL&&case_node->is_int)
             newIntercode(GOTO_I,label_true);
         if(label_false!=NULL&&!case_node->is_int)
             newIntercode(GOTO_I,label_false);
+    }else{
+        Operand op=Exp_gen(cur_node);
+        if(label_true!=NULL&&label_false!=NULL){
+            newIntercode(IFGOTO_I,op,"!=",zero,label_true);
+            newIntercode(GOTO_I,label_false);
+        }else if(label_true!=NULL){
+            newIntercode(IFGOTO_I,op,"!=",zero,label_true);
+        }else if(label_false!=NULL){
+            newIntercode(IFGOTO_I,op,"==",zero,label_false);
+        }
     }
 	return;
 }
