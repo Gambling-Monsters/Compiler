@@ -330,15 +330,6 @@ void printIntercode(FILE *file)
     fclose(file);
 }
 
-void Link_Insert(InterCode_L cur)
-{
-    cur->prev = tail_code;
-    cur->next = head_code;
-    tail_code->next = cur;
-    head_code->prev = cur;
-    tail_code = cur;
-}
-
 //中间代码生成
 void newIntercode(int kind, ...)
 {
@@ -409,10 +400,27 @@ void newIntercode(int kind, ...)
             p1->code.u.call.result = va_arg(args, Operand);
             break;
         }
-
         case ADD_I:
+        {
+            p1->code.u.binop.result = va_arg(args, Operand);
+            p1->code.u.binop.op1 = va_arg(args, Operand);
+            p1->code.u.binop.op2 = va_arg(args, Operand);
+            break;
+        }
         case SUB_I:
+        {
+            p1->code.u.binop.result = va_arg(args, Operand);
+            p1->code.u.binop.op1 = va_arg(args, Operand);
+            p1->code.u.binop.op2 = va_arg(args, Operand);
+            break;
+        }
         case MUL_I:
+        {
+            p1->code.u.binop.result = va_arg(args, Operand);
+            p1->code.u.binop.op1 = va_arg(args, Operand);
+            p1->code.u.binop.op2 = va_arg(args, Operand);
+            break;
+        }
         case DIV_I:
         {
             p1->code.u.binop.result = va_arg(args, Operand);
@@ -420,7 +428,6 @@ void newIntercode(int kind, ...)
             p1->code.u.binop.op2 = va_arg(args, Operand);
             break;
         }
-
         case IFGOTO_I:
         {
             p1->code.u.ifgoto.result = va_arg(args, Operand);
@@ -763,7 +770,7 @@ Operand VarDec_gen(struct AST_Node *cur_node)
     
     ST_node my_id = find_symbol(ID_node->is_string, __INT_MAX__);
     result = createOP(VARIABLE_O, 1, ID_node->is_string);
-    my_id->ifaddress = 1;
+    my_id->address_ornot = 1;
     my_id->var_no = result->u.var_no;
     int typesize = gettypesize(my_id->type);
     if (gettypesize(my_id->type) != 4)//结构体与数组情况，需要分配空间。
@@ -799,7 +806,7 @@ void FunDec_gen(struct AST_Node *cur_node)
 
             ST_node query_paras = find_symbol(paras->name, __INT_MAX__);
             query_paras->var_no = paraop->u.var_no;
-            query_paras->ifaddress = paraop->u.address_ornot;
+            query_paras->address_ornot = paraop->u.address_ornot;
             newIntercode(PARAM_I, paraop);
             paras = paras->tail;
         }
@@ -848,7 +855,7 @@ Operand Exp_ID(struct AST_Node *cur_node)
     {
         //  printf("hereid1\n");
         ST_node ID_node = find_symbol(ID->is_string, __INT_MAX__);
-        ret_op=createOP(VARIABLE_O,ID_node->ifaddress,ID->is_string);
+        ret_op=createOP(VARIABLE_O,ID_node->address_ornot,ID->is_string);
         varible_num--;
         ret_op->u.var_no=ID_node->var_no;
         ret_op->u.depth=0;
