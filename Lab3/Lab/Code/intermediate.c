@@ -871,6 +871,7 @@ Operand Exp_ID(struct AST_Node *cur_node)
 
                 return ret_op;
             }else{
+                ret_op=createOP(TEMPVAR_O,1);
                 Operand functionname=createOP(FUNCTION_O,1,ID->is_string);
                 ST_node id_node=find_symbol(ID->is_string, __INT_MAX__);
                 Arg_gen(Args,id_node->type->u.function.paras);
