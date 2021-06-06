@@ -1,19 +1,18 @@
+FUNCTION add : 
+PARAM &varible_0
+tempvar_2 := #0 * #4
+tempvar_3 := varible_0 + tempvar_2
+tempvar_4 := #1 * #4
+tempvar_5 := varible_0 + tempvar_4
+tempvar_1 := *tempvar_3 + *tempvar_5
+RETURN tempvar_1
 FUNCTION main : 
-READ tempvar_1
-varible_0 := tempvar_1
-IF varible_0 <= #0 GOTO label0
-WRITE #1
-tempvar_2 := #0
-GOTO label1
+DEC varible_1 8
+DEC varible_2 8
+varible_3 := #0
+varible_4 := #0
 LABEL label0 : 
-IF varible_0 >= #0 GOTO label2
-tempvar_3 := #0 - #1
-WRITE tempvar_3
-tempvar_4 := #0
-GOTO label3
-LABEL label2 : 
-WRITE #0
-tempvar_5 := #0
-LABEL label3 : 
+IF varible_3 >= #2 GOTO label1
+GOTO label0
 LABEL label1 : 
 RETURN #0

@@ -997,22 +997,34 @@ Type Specifier_check(struct AST_Node *cur_node)
                         type->u.my_struct.structure = NULL;
                     else
                     {
+                        int cur_offset=0;
                         struct AST_Node *Def_node = tmp_node03;
                         FieldList result = NULL, now_field = NULL;
+                        
                         while (1)
                         {
                             struct AST_Node *tmp_defnode0 = AST_getChild(Def_node, 0);
                             if (tmp_defnode0 == NULL)
                                 break;
-                            FieldList tmp_defplus = Def_struct_check(tmp_defnode0, name_ofStruct);
+                            int tmp_offset=0;
+                            FieldList tmp_defplus = Def_struct_check(tmp_defnode0, name_ofStruct,cur_offset, &tmp_offset);
+                            cur_offset=cur_offset+tmp_offset;
                             if (result == NULL)
                             {
                                 result = tmp_defplus;
+                                FieldList tmp_fieldtail=tmp_defplus;
+                                while(tmp_fieldtail->tail!=NULL){
+                                    tmp_fieldtail=tmp_fieldtail->tail;
+                                }
                                 now_field=result;
                             }
                             else
                             {
                                 now_field->tail = tmp_defplus;
+                                FieldList tmp_fieldtail=tmp_defplus;
+                                while(tmp_fieldtail->tail!=NULL){
+                                    tmp_fieldtail=tmp_fieldtail->tail;
+                                }
                                 now_field=now_field->tail;
                             }
                             Def_node = AST_getChild(Def_node, 1);
@@ -1056,6 +1068,7 @@ Type Specifier_check(struct AST_Node *cur_node)
                 type->u.my_struct.structure = NULL;
             else
             {
+                int cur_offset=0;
                 struct AST_Node *Def_node = tmp_node03;
                 FieldList result = NULL,now_field = NULL;
                 while (1)
@@ -1063,16 +1076,26 @@ Type Specifier_check(struct AST_Node *cur_node)
                     struct AST_Node *tmp_defnode0 = AST_getChild(Def_node, 0);
                     if (tmp_defnode0 == NULL)
                         break;
-                    FieldList tmp_defplus = Def_struct_check(tmp_defnode0, name_ofStruct);
+                    int tmp_offset=0;
+                    FieldList tmp_defplus = Def_struct_check(tmp_defnode0, name_ofStruct,cur_offset, &tmp_offset);
+                    cur_offset+=tmp_offset;
                     if (result == NULL)
                     {
                         result = tmp_defplus;
+                        FieldList tmp_fieldtail=tmp_defplus;
+						while(tmp_fieldtail->tail!=NULL){
+							tmp_fieldtail=tmp_fieldtail->tail;
+						}
                         now_field = result;
                     }
                     else
                     {
                         now_field->tail = tmp_defplus;
-						now_field=now_field->tail;
+						FieldList tmp_fieldtail=tmp_defplus;
+						while(tmp_fieldtail->tail!=NULL){
+							tmp_fieldtail=tmp_fieldtail->tail;
+						}
+                        now_field=now_field->tail;
                     }
                     Def_node = AST_getChild(Def_node, 1);
                     if (Def_node == NULL)
@@ -1086,7 +1109,9 @@ Type Specifier_check(struct AST_Node *cur_node)
     return type;
 }
 
-FieldList Def_struct_check(struct AST_Node *cur_node, char *struct_name)
+extern int gettypesize(Type cur);
+
+FieldList Def_struct_check(struct AST_Node *cur_node, char *struct_name, int cur_offset,int *latest_offset)
 {
     /*
 	Def -> Specifier DecList SEMI
@@ -1095,6 +1120,7 @@ FieldList Def_struct_check(struct AST_Node *cur_node, char *struct_name)
 	*/
     struct AST_Node *DecList_node = AST_getChild(cur_node, 1);
     struct AST_Node *new_DecListNode = DecList_node;
+    int tmp_offset=0;
     Type nowtype = Specifier_check(AST_getChild(cur_node, 0));
     FieldList res_field = NULL, tmp_field = NULL;
     while (AST_getChild(new_DecListNode, 1) != NULL)
@@ -1103,12 +1129,16 @@ FieldList Def_struct_check(struct AST_Node *cur_node, char *struct_name)
         FieldList Dec_field = Dec_struct_check(Dec_node, nowtype);
         char *Dec_name = (char *)malloc(1 + strlen(struct_name) + strlen(Dec_field->name));
         strcpy(Dec_name, Dec_field->name);
-        strcat(Dec_name, struct_name);
         Type tmp_typee = (Type)malloc(sizeof(struct Type_));
+        int now_offset=tmp_offset+cur_offset;
         if (struct_Find(&tmp_typee, Dec_name) == 0) //域名重复定义 query_struct_name
             print_error(15, Dec_node->lineno, Dec_field->name);
         else
-            insert_struct(Dec_field->type, Dec_name);
+        {
+            insert_struct(Dec_field->type, Dec_name, now_offset, struct_name);
+        }
+            
+        tmp_offset+=gettypesize(Dec_field->type);
         if (res_field == NULL)
         {
             res_field = Dec_field;
@@ -1125,12 +1155,13 @@ FieldList Def_struct_check(struct AST_Node *cur_node, char *struct_name)
     FieldList Dec_field = Dec_struct_check(Dec_node, nowtype);
     char *Dec_name = (char *)malloc(strlen(struct_name) + strlen(Dec_field->name) + 1);
     strcpy(Dec_name, Dec_field->name);
-    strcat(Dec_name, struct_name);
     Type nulltype = (Type)malloc(sizeof(struct Type_));
+    int now_offset=tmp_offset+cur_offset;
     if (struct_Find(&nulltype, Dec_name) == 0)
         print_error(15, Dec_node->lineno, Dec_field->name);
     else
-        insert_struct(Dec_field->type, Dec_name);
+        insert_struct(Dec_field->type, Dec_name, now_offset, struct_name);
+    tmp_offset+=gettypesize(Dec_field->type);
     if (res_field == NULL)
     {
         res_field = Dec_field;
@@ -1141,6 +1172,7 @@ FieldList Def_struct_check(struct AST_Node *cur_node, char *struct_name)
         tmp_field->tail = Dec_field;
         tmp_field = tmp_field->tail;
     }
+    *latest_offset = tmp_offset;
     return res_field;
 }
 
