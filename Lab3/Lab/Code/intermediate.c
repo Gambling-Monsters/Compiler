@@ -393,8 +393,8 @@ void newIntercode(int kind, ...)
 
         case ASSIGN_I:
         {
-            p1->code.u.assign.right = va_arg(args, Operand);
             p1->code.u.assign.left = va_arg(args, Operand);
+            p1->code.u.assign.right = va_arg(args, Operand);
             break;
         }
         case DEC_I:
