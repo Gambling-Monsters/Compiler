@@ -399,8 +399,8 @@ void newIntercode(int kind, ...)
         }
         case DEC_I:
         {
-            p1->code.u.call.op = va_arg(args, Operand);
-            p1->code.u.call.result = va_arg(args, Operand);
+            p1->code.u.dec.op = va_arg(args, Operand);
+            p1->code.u.dec.result = va_arg(args, Operand);
             break;
         }
         case CALL_I:
