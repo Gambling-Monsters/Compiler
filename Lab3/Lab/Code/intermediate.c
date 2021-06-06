@@ -634,17 +634,13 @@ void Stmt_gen(struct AST_Node *cur_node)
     
     struct AST_Node *temp = cur_node->child;
     if(strcmp(temp->name, "Exp") == 0){
-        // printf("here1\n");
         Exp_gen(temp);
-        //  printf("here1\n");
     }
     else if (strcmp(temp->name, "CompSt") == 0){
-        // printf("here2\n");
-        // CompSt_gen(temp);
+        CompSt_gen(temp);
     }
     else if (strcmp(temp->name, "RETURN") == 0)
     {
-        // printf("here3\n");
         struct AST_Node *exp_node = AST_getChild(cur_node, 1);
         Operand exp_op = Exp_gen(exp_node);
         newIntercode(RETURN_I, exp_op);
@@ -682,7 +678,7 @@ void Stmt_gen(struct AST_Node *cur_node)
         //code3 = translate_Stmt(Stmt2, sym_table) (unuse in IF LP Exp RP Stmt)
         //return code1 + code2 + [LABEL label1](false)
         //return code1 + code2 + [GOTO label2] + [LABEL label1](false) + code3 + [LABEL label2]
-        // printf("here5\n");
+        
         struct AST_Node *exp_node = AST_getChild(cur_node, 2);
         struct AST_Node *else_node = AST_getChild(cur_node, 5);
 
