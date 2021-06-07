@@ -4,8 +4,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include "intermediate.h"
-#include "OBJcode.h"
 extern FILE *yyin;
 extern int yydebug;
 extern int lexError;
@@ -17,6 +15,7 @@ int yylex();
 void func(struct AST_Node *s_node, int h);
 void yyrestart(FILE *f);
 
+extern void OBJ_generate(FILE* file);
 int main(int argc, char **argv)
 {
 
@@ -39,7 +38,9 @@ int main(int argc, char **argv)
     {
         if (synErr == 0)
         {
+            
             checkStart(root);
+            
             init_gen(root,file_2);
             OBJ_generate(file_2);
         }

@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "/home/wjr/Compiler/Lab3/Lab/Code/parser",
-            "args": ["/home/wjr/Compiler/Lab3/Lab/Test/test1.cmm",
+            "args": ["/home/wjr/Compiler/Lab3/Lab/Test/test4.cmm",
                 "/home/wjr/Compiler/Lab3/Lab/Code/out.ir"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

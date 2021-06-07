@@ -1,0 +1,44 @@
+FUNCTION add : 
+PARAM variable_0
+tempvar_1 := #0 * #4
+tempvar_2 := variable_0 + tempvar_1
+tempvar_3 := #1 * #4
+tempvar_4 := variable_0 + tempvar_3
+tempvar_0 := *tempvar_2 + *tempvar_4
+RETURN tempvar_0
+FUNCTION main : 
+DEC variable_1 8
+DEC variable_2 8
+variable_3 := #0
+variable_4 := #0
+LABEL label0 : 
+IF variable_3 >= #2 GOTO label1
+LABEL label2 : 
+IF variable_4 >= #2 GOTO label3
+tempvar_5 := variable_4 * #4
+tempvar_6 := &variable_1 + tempvar_5
+tempvar_7 := variable_3 + variable_4
+*tempvar_6 := tempvar_7
+tempvar_8 := variable_4 + #1
+variable_4 := tempvar_8
+GOTO label2
+LABEL label3 : 
+tempvar_9 := #0 * #8
+tempvar_10 := &variable_2 + tempvar_9
+tempvar_11 := variable_3 * #4
+tempvar_12 := tempvar_10 + tempvar_11
+ARG &variable_1 
+tempvar_13 := CALL add
+*tempvar_12 := tempvar_13
+tempvar_14 := #0 * #8
+tempvar_15 := &variable_2 + tempvar_14
+tempvar_16 := variable_3 * #4
+tempvar_17 := tempvar_15 + tempvar_16
+WRITE *tempvar_17
+tempvar_18 := #0
+tempvar_19 := variable_3 + #1
+variable_3 := tempvar_19
+variable_4 := #0
+GOTO label0
+LABEL label1 : 
+RETURN #0

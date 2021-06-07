@@ -24,7 +24,7 @@ hash_stack enter_domain();
 void exit_domain();
 void add_func(char *name, int func_lineno);
 void check_func();
-int insert_struct(Type type,char*name,int offset,char*belongtosturctname);
+int insert_struct(Type type,char*name, int offset, char*struct_owner);
 ST_node find_struct(char *name);
 int type_eq(Type A, Type B);
 int strong_array_check(Type A, Type B);
@@ -32,6 +32,7 @@ unsigned int hash_pjw(char *name);
 int struct_Find(Type *type, char *name);
 int symbol_Find_mrk(Type *type, char *name, int *ifdef, int depth, int mrk);
 int symbol_Kind_find(Type *type, char *name, int *ifdef, int depth, int *kind);
+int getarraydepth(ST_node arr_node);
 struct FieldList_
 {
     char *name;     //域的名字;
@@ -93,7 +94,7 @@ struct ST_node_
     //控制域链表
     ST_node ctrl_next;
     
-    int var_no,ifaddress,offset;
+    int var_no, address_ornot, offset;
 	char *struct_toname;
 };
 

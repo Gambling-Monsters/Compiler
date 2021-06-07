@@ -1,9 +1,30 @@
+//#include "intermediate.c"
+#include "symbols_hashtable.h"
 #include "OBJcode.h"
+
+typedef struct codestack_struct* code_stack;
+typedef struct pidstack_struct* pid_stack;
+
+struct reg_struct{
+    int regState;
+    char *regName;
+};
+
+struct codestack_struct{
+    int offset, kind, labelNum;
+    code_stack next;
+};
+
+struct pidstack_struct{
+    code_stack pidFile;
+    pid_stack next;
+};
+
+void OBJ_generate(FILE* file);
 extern InterCode_L head_code;
 extern int labelCount;
 extern int varCount;
 extern int tmpCount;
-extern int decCount;
 extern void printOP(Operand op, FILE *file);
 
 struct reg_struct _reg[32];
@@ -15,7 +36,7 @@ char *funcName=NULL;
 
 int findOP(Operand cur){
     code_stack tmp_node=stackFp;
-	int tmp_kind=cur->kind, tmp_labelNum=cur->labelNum;
+	int tmp_kind=cur->kind, tmp_labelNum=cur->u.var_no;
 	int mrk=0;
 	while(tmp_node!=NULL){
 		if(tmp_node->labelNum==tmp_labelNum&&tmp_node->kind==tmp_kind){
@@ -51,9 +72,9 @@ void popPid(){
 
 void pushOP(Operand op,int offset){
     code_stack tmp=(code_stack)(malloc(sizeof(struct codestack_struct)));
-    int tmp_kind=op->kind, tmp_labelNum=op->labelNum;
+    int tmp_kind=op->kind, tmp_labelNum=op->u.var_no;
     tmp->kind=tmp_kind;
-    tmp->labelNum=op->labelNum;
+    tmp->labelNum=op->u.var_no;
     tmp->offset=offset;
     tmp->next=NULL;
     stackSp->next=tmp;
@@ -85,7 +106,7 @@ void popOP(){
 
 int findOP_offset(Operand cur){
     code_stack tmp=stackFp;
-    int tmp_kind=cur->kind, tmp_labelNum=cur->labelNum;
+    int tmp_kind=cur->kind, tmp_labelNum=cur->u.var_no;
     int tmp_offset=-1;
     while(tmp!=NULL){
         if(tmp->labelNum==tmp_labelNum&&tmp->kind==tmp_kind){
@@ -99,49 +120,49 @@ int findOP_offset(Operand cur){
 
 void regLoad(Operand op,int reg,FILE* file){
 	switch(op->kind){
-		case VARIABLE_OPERAND:{
+		case (VARIABLE_O):{
 			int tmp_offset=findOP_offset(op);
-			if(op->address==ADDRESS_OPERAND)
+			if(!op->u.address_ornot)
 				fprintf(file,"  la %s, %d($fp)\n",_reg[reg].regName,-tmp_offset);
 			else
 				fprintf(file,"  lw %s, %d($fp)\n",_reg[reg].regName,-tmp_offset);
 			break;
 		}
-		case CONSTANT_OPERAND:{
-			fprintf(file,"  li %s, %d\n",_reg[reg].regName,op->value);
+		case (CONSTANT_O):{
+			fprintf(file,"  li %s, %d\n",_reg[reg].regName,op->u.value);
 			break;
 		}
-		case TEMPVAR_OPERAND:{
+		case (FUNCTION_O):{
+			fprintf(file,"  la %s, %s\n",_reg[reg].regName,op->u.function_name);
+			break;
+		}
+		case (LABEL_O):{
+			fprintf(file,"  la %s, label%d\n",_reg[reg].regName,op->u.var_no);
+			break;
+		}	
+		case (TEMPVAR_O):{
 			int tmp_offset=findOP_offset(op);
-			if(op->address==ADDRESS_OPERAND){
+			if(!op->u.address_ornot){
 				fprintf(file,"  lw %s, %d($fp)\n",_reg[14].regName,-tmp_offset);
 				fprintf(file,"  lw %s, 0(%s)\n",_reg[reg].regName,_reg[14].regName);
 			}else
 				fprintf(file,"  lw %s, %d($fp)\n",_reg[reg].regName,-tmp_offset);
 			break;
 		}
-		case FUNCTION_OPERAND:{
-			fprintf(file,"  la %s, %s\n",_reg[reg].regName,op->funcName);
-			break;
-		}
-		case LABEL_OPERAND:{
-			fprintf(file,"  la %s, label%d\n",_reg[reg].regName,op->labelNum);
-			break;
-		}	
 	}
 }
 
 void regSave(Operand op,int reg,FILE* file){
 	switch(op->kind){
-		case VARIABLE_OPERAND:{
+		case (VARIABLE_O):{
 			int tmp_offset=findOP_offset(op);
-			if(op->address!=ADDRESS_OPERAND)
+			if(op->u.address_ornot)
 				fprintf(file,"  sw %s, %d($fp)\n",_reg[reg].regName,-tmp_offset);
 			break;
 		}
-		case TEMPVAR_OPERAND:{
+		case (TEMPVAR_O):{
 			int tmp_offset=findOP_offset(op);
-			if(op->address==ADDRESS_OPERAND){
+			if(!op->u.address_ornot){
 				fprintf(file,"  lw %s, %d($fp)\n",_reg[14].regName,-tmp_offset);
 				fprintf(file,"  sw %s, 0(%s)\n",_reg[reg].regName,_reg[14].regName);
 			}else
