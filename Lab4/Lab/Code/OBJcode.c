@@ -6,7 +6,10 @@ typedef struct codestack_struct* code_stack;
 typedef struct pidstack_struct* pid_stack;
 
 struct reg_struct{
-    int regState;
+	enum{
+		r_free,
+		r_used
+	}regState;
     char *regName;
 };
 
@@ -48,28 +51,6 @@ int findOP(Operand cur){
 	return mrk;
 }
 
-void pushPid(code_stack file){
-    pid_stack tmp=(pid_stack)malloc(sizeof(struct pidstack_struct));
-    tmp->next=NULL;
-    tmp->pidFile=file;
-    pidCur->next=tmp;
-    pidCur=tmp;
-}
-
-void popPid(){
-    pid_stack tmp=pidHead;
-    while(1){
-        if(tmp==NULL) break;
-        if(tmp->next==pidCur){
-            tmp->next=NULL;
-            free(pidCur);
-            pidCur=tmp;
-            break;
-        }
-        tmp=tmp->next;
-    }
-}
-
 void pushOP(Operand op,int offset){
     code_stack tmp=(code_stack)(malloc(sizeof(struct codestack_struct)));
     int tmp_kind=op->kind, tmp_labelNum=op->u.var_no;
@@ -104,24 +85,18 @@ void popOP(){
 	stackSp=tmp;
 }
 
-int findOP_offset(Operand cur){
-    code_stack tmp=stackFp;
-    int tmp_kind=cur->kind, tmp_labelNum=cur->u.var_no;
-    int tmp_offset=-1;
-    while(tmp!=NULL){
-        if(tmp->labelNum==tmp_labelNum&&tmp->kind==tmp_kind){
-			tmp_offset=tmp->offset;
-			break;
-		}
-		tmp=tmp->next;
-    }
-    return tmp_offset;
-}
-
 void regLoad(Operand op,int reg,FILE* file){
 	switch(op->kind){
 		case (VARIABLE_O):{
-			int tmp_offset=findOP_offset(op);
+			code_stack tmp_stack=stackFp;
+			int tmp_offset=-1;
+			while(tmp_stack!=NULL){
+				if(tmp_stack->kind==op->kind&&tmp_stack->labelNum==op->u.var_no){
+					tmp_offset=tmp_stack->offset;
+					break;
+				}
+				tmp_stack=tmp_stack->offset;
+			}
 			if(!op->u.address_ornot)
 				fprintf(file,"  la %s, %d($fp)\n",_reg[reg].regName,-tmp_offset);
 			else
@@ -141,7 +116,15 @@ void regLoad(Operand op,int reg,FILE* file){
 			break;
 		}	
 		case (TEMPVAR_O):{
-			int tmp_offset=findOP_offset(op);
+			code_stack tmp_stack=stackFp;
+			int tmp_offset=-1;
+			while(tmp_stack!=NULL){
+				if(tmp_stack->kind==op->kind&&tmp_stack->labelNum==op->u.var_no){
+					tmp_offset=tmp_stack->offset;
+					break;
+				}
+				tmp_stack=tmp_stack->offset;
+			}
 			if(!op->u.address_ornot){
 				fprintf(file,"  lw %s, %d($fp)\n",_reg[14].regName,-tmp_offset);
 				fprintf(file,"  lw %s, 0(%s)\n",_reg[reg].regName,_reg[14].regName);
@@ -155,13 +138,29 @@ void regLoad(Operand op,int reg,FILE* file){
 void regSave(Operand op,int reg,FILE* file){
 	switch(op->kind){
 		case (VARIABLE_O):{
-			int tmp_offset=findOP_offset(op);
+			code_stack tmp_stack=stackFp;
+			int tmp_offset=-1;
+			while(tmp_stack!=NULL){
+				if(tmp_stack->kind==op->kind&&tmp_stack->labelNum==op->u.var_no){
+					tmp_offset=tmp_stack->offset;
+					break;
+				}
+				tmp_stack=tmp_stack->offset;
+			}
 			if(op->u.address_ornot)
 				fprintf(file,"  sw %s, %d($fp)\n",_reg[reg].regName,-tmp_offset);
 			break;
 		}
 		case (TEMPVAR_O):{
-			int tmp_offset=findOP_offset(op);
+			code_stack tmp_stack=stackFp;
+			int tmp_offset=-1;
+			while(tmp_stack!=NULL){
+				if(tmp_stack->kind==op->kind&&tmp_stack->labelNum==op->u.var_no){
+					tmp_offset=tmp_stack->offset;
+					break;
+				}
+				tmp_stack=tmp_stack->offset;
+			}
 			if(!op->u.address_ornot){
 				fprintf(file,"  lw %s, %d($fp)\n",_reg[14].regName,-tmp_offset);
 				fprintf(file,"  sw %s, 0(%s)\n",_reg[reg].regName,_reg[14].regName);
@@ -172,29 +171,9 @@ void regSave(Operand op,int reg,FILE* file){
 	}
 }
 
-void printRelop(char *relop_operand, FILE *file){
-	if(strcmp(relop_operand,"==")==0){
-		fprintf(file,"beq ");
-	}else if(strcmp(relop_operand,"!=")==0){
-		fprintf(file,"bne ");
-	}else if(strcmp(relop_operand,">")==0){
-		fprintf(file,"bgt ");
-	}else if(strcmp(relop_operand,"<")==0){
-		fprintf(file,"blt ");
-	}else if(strcmp(relop_operand,">=")==0){
-		fprintf(file,"bge ");
-	}else if(strcmp(relop_operand,"<=")==0){
-		fprintf(file,"ble ");
-	}
-}
-
-void OBJcode_trans(FILE *file){
-    //TODO
-}
-
 void OBJ_generate(FILE* file){
     for(int i=0;i<32;i++)
-        _reg[i].regState=0;
+        _reg[i].regState=r_free;
     _reg[0].regName="$zero";
 	_reg[1].regName="$at";
 	_reg[2].regName="$v0";
@@ -228,7 +207,8 @@ void OBJ_generate(FILE* file){
 	_reg[30].regName="$fp";
 	_reg[31].regName="$ra";
     fprintf(file,".data\n");
-	fprintf(file, "_prompt: .asciiz \"Enter an integer:\"\n_ret: .asciiz \"\\n\"\n.globl main\n");
+	fprintf(file, "_prompt: .asciiz \"Enter an integer:\"\n_ret: .asciiz \"\\n\"\n");
+	fprintf(file, ".globl main\n");
     fprintf(file, ".text\n");
 	fprintf(file, "read:\n");
 	fprintf(file, "  li $v0, 4\n");
@@ -236,8 +216,9 @@ void OBJ_generate(FILE* file){
 	fprintf(file, "  syscall\n");
 	fprintf(file, "  li $v0, 5\n");
 	fprintf(file, "  syscall\n");
-	fprintf(file, "  jr $ra\n\n");
-	fprintf(file, "_func_write:\n");
+	fprintf(file, "  jr $ra\n");
+	fprintf(file, "\n");
+	fprintf(file, "write:\n");
 	fprintf(file, "  li $v0, 1\n");
 	fprintf(file, "  syscall\n");
 	fprintf(file, "  li $v0, 4\n");
@@ -245,6 +226,7 @@ void OBJ_generate(FILE* file){
 	fprintf(file, "  syscall\n");
 	fprintf(file, "  move $v0, $0\n");
 	fprintf(file, "  jr $ra\n");
+
 	stackHead=(code_stack)(malloc(sizeof(struct codestack_struct)));
 	stackHead->next=NULL;
 	stackFp=stackHead;
@@ -254,5 +236,129 @@ void OBJ_generate(FILE* file){
 	pidHead->next=NULL;
 	pidCur=pidHead;
 
-    OBJcode_trans(file);
+	InterCode_L p1=head_code->next;
+	while(p1!=head_code){
+		//OBJcode_trans(file,p1);
+		switch(p1->code.kind){
+			// ASSIGN_I,
+			// ADD_I,
+			// SUB_I,
+			// MUL_I,
+			// DIV_I,
+			// FUNCTION_I,
+			// PARAM_I,
+			// RETURN_I,
+			// CALL_I,
+			// DEC_I,
+			// LABEL_I,
+			// GOTO_I,
+			// IFGOTO_I,
+			// ARGS_I,
+			// READ_I,
+			// WRITE_I
+			case (ASSIGN_I):{
+				//t0,t1
+				regLoad(p1->code.u.assign.left, 8, file);
+				regLoad(p1->code.u.assign.right, 9, file);
+				fprintf(file,"  move %s, %s\n",_reg[8].regName,_reg[9].regName);
+				save_reg(p1->code.u.assign.left, 8, file);
+				break;
+			}
+			case (ADD_I):{
+				//t0=t1+t2
+				regLoad(p1->code.u.binop.op1, 9, file);
+				regLoad(p1->code.u.binop.op2, 10, file);
+				fprintf(file,"  add %s, %s, %s\n",_reg[8].regName,_reg[9].regName,_reg[10].regName);
+				save_reg(p1->code.u.binop.result,8,file);
+				break;
+			}
+			case (SUB_I):{
+				//t0=t1-t2
+				regLoad(p1->code.u.binop.op1, 9, file);
+				regLoad(p1->code.u.binop.op2, 10, file);
+				fprintf(file,"  sub %s, %s, %s\n",_reg[8].regName,_reg[9].regName,_reg[10].regName);
+				save_reg(p1->code.u.binop.result,8,file);
+				break;
+			}
+			case (MUL_I):{
+				//t0=t1*t2
+				regLoad(p1->code.u.binop.op1, 9, file);
+				regLoad(p1->code.u.binop.op2, 10, file);
+				fprintf(file,"  mul %s, %s, %s\n",_reg[8].regName,_reg[9].regName,_reg[10].regName);
+				save_reg(p1->code.u.binop.result,8,file);
+				break;
+			}
+			case (DIV_I):{
+				//t0=t1/t2
+				regLoad(p1->code.u.binop.op1, 9, file);
+				regLoad(p1->code.u.binop.op2, 10, file);
+				fprintf(file,"  div %s, %s\n",_reg[9].regName,_reg[10].regName);
+				fprintf(file,"  mflo %s\n",_reg[8].regName);
+				save_reg(p1->code.u.binop.result,8,file);
+				break;
+			}
+			case (FUNCTION_I):{
+				//TODO
+			}
+			case (PARAM_I):{
+				break;
+			}
+			case (RETURN_I):{
+				//TODO
+			}
+			case (CALL_I):{
+				if(strcmp(p1->code.u.call.result->u.function_name,"main")==0)
+					fprintf(file,"  jal %s\n",p1->code.u.call.result->u.function_name);
+				else{
+					fprintf(file,"  jal _func_%s\n",p1->code.u.call.result->u.function_name);
+				}	
+				save_reg(p1->code.u.call.op, 2,file);
+				break;
+			}
+			case (DEC_I):{
+				break;
+			}
+			case (LABEL_I):{
+				fprintf(file, "label%d:\n", p1->code.u.label.result->u.var_no);
+				break;
+			}
+			case (GOTO_I):{
+				fprintf(file,"  j label%d\n",p1->code.u.goto_u.result->u.var_no);
+				break;
+			}
+			case (IFGOTO_I):{
+				load_reg(p1->code.u.ifgoto.result, 8, file);
+				load_reg(p1->code.u.ifgoto.op1, 9, file);
+				fprintf(file, "  ");
+				if(strcmp(p1->code.u.ifgoto.mrk,"==")==0){
+					fprintf(file,"beq ");
+				}else if(strcmp(p1->code.u.ifgoto.mrk,"!=")==0){
+					fprintf(file,"bne ");
+				}else if(strcmp(p1->code.u.ifgoto.mrk,">")==0){
+					fprintf(file,"bgt ");
+				}else if(strcmp(p1->code.u.ifgoto.mrk,"<")==0){
+					fprintf(file,"blt ");
+				}else if(strcmp(p1->code.u.ifgoto.mrk,">=")==0){
+					fprintf(file,"bge ");
+				}else if(strcmp(p1->code.u.ifgoto.mrk,"<=")==0){
+					fprintf(file,"ble ");
+				}
+				fprintf(file, "%s, %s, label%d\n",_reg[8].regName,_reg[9].regName,p1->code.u.ifgoto.op2->u.var_no);
+				break;
+			}
+			case (ARGS_I):{
+				//TODO
+			}
+			case (READ_I):{
+				//TODO
+			}
+			case (WRITE_I):{
+				//TODO
+			}
+			default:
+				break;
+		}
+		p1=p1->next;
+	}
+
 }
