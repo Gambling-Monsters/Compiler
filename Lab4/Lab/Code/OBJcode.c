@@ -39,22 +39,18 @@ char *funcName=NULL;
 
 int findOP(Operand cur){
     code_stack tmp_node=stackFp;
-	int tmp_kind=cur->kind, tmp_labelNum=cur->u.var_no;
-	int mrk=0;
 	while(tmp_node!=NULL){
-		if(tmp_node->labelNum==tmp_labelNum&&tmp_node->kind==tmp_kind){
-			mrk=1;
-			break;
+		if(tmp_node->labelNum==cur->u.var_no&&tmp_node->kind==cur->kind){
+			return 1;
 		}
 		tmp_node=tmp_node->next;
 	}
-	return mrk;
+	return 0;
 }
 
 void pushOP(Operand op,int offset){
     code_stack tmp=(code_stack)(malloc(sizeof(struct codestack_struct)));
-    int tmp_kind=op->kind, tmp_labelNum=op->u.var_no;
-    tmp->kind=tmp_kind;
+    tmp->kind=op->kind;
     tmp->labelNum=op->u.var_no;
     tmp->offset=offset;
     tmp->next=NULL;
@@ -64,19 +60,12 @@ void pushOP(Operand op,int offset){
 
 void popOP(){
     code_stack tmp=stackHead;
-    int mrk=0;
 	while(1){
 		if(tmp==NULL){
 			break;
 		}
-		if(tmp==stackFp){
+		if(tmp==stackFp||tmp->next==stackFp){
 			tmp->next=NULL;
-			mrk=1;
-			break;
-		}
-		if(tmp->next==stackFp){
-			tmp->next=NULL;
-			mrk=1;
 			break;
 		}
 		tmp=tmp->next;
@@ -307,11 +296,7 @@ void OBJ_generate(FILE* file){
 				//TODO
 			}
 			case (CALL_I):{
-				if(strcmp(p1->code.u.call.result->u.function_name,"main")==0)
-					fprintf(file,"  jal %s\n",p1->code.u.call.result->u.function_name);
-				else{
-					fprintf(file,"  jal _func_%s\n",p1->code.u.call.result->u.function_name);
-				}	
+				fprintf(file,"  jal %s\n",p1->code.u.call.result->u.function_name);
 				regSave(p1->code.u.call.op, 2,file);
 				break;
 			}
@@ -347,13 +332,21 @@ void OBJ_generate(FILE* file){
 				break;
 			}
 			case (ARGS_I):{
-				//TODO
+				fprintf(file, "  addi $sp,$sp,-4\n");
+				regLoad(p1->code.u.args.result, 16, file);
+				fprintf(file, "  sw %s, 0($sp)\n", _reg[16].regName);
+				break;
 			}
 			case (READ_I):{
-				//TODO
+				fprintf(file, "  jal read\n");
+				fprintf(file, "  move %s, %s\n", _reg[8].regName, _reg[2].regName);
+				regSave(p1->code.u.read.result, 8, file);
 			}
 			case (WRITE_I):{
-				//TODO
+				regLoad(p1->code.u.write.result,8,file);
+				fprintf(file,"  move %s, %s\n",_reg[4].regName,_reg[8].regName);
+				fprintf(file,"  jal write\n");
+				break;
 			}
 			default:
 				break;
