@@ -121,6 +121,7 @@ void printOP(Operand op, FILE *file)
 //打印中间符号
 void printIntercode(FILE *file)
 {
+	file=fopen("out1.ir", "wt+");
     InterCode_L p1 = head_code->next;
     while (p1 != head_code)
     {
@@ -439,8 +440,7 @@ void init_gen(struct AST_Node* cur_node, FILE *fp)
     tail_code = head_code;
     
     Program_gen(cur_node);
-     
-    printIntercode(fp);
+
 }
 
 void Program_gen(struct AST_Node *cur_node)

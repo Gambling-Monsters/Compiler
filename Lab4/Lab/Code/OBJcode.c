@@ -95,7 +95,7 @@ void regLoad(Operand op,int reg,FILE* file){
 					tmp_offset=tmp_stack->offset;
 					break;
 				}
-				tmp_stack=tmp_stack->offset;
+				tmp_stack=tmp_stack->next;
 			}
 			if(!op->u.address_ornot)
 				fprintf(file,"  la %s, %d($fp)\n",_reg[reg].regName,-tmp_offset);
@@ -123,7 +123,7 @@ void regLoad(Operand op,int reg,FILE* file){
 					tmp_offset=tmp_stack->offset;
 					break;
 				}
-				tmp_stack=tmp_stack->offset;
+				tmp_stack=tmp_stack->next;
 			}
 			if(!op->u.address_ornot){
 				fprintf(file,"  lw %s, %d($fp)\n",_reg[14].regName,-tmp_offset);
@@ -145,7 +145,7 @@ void regSave(Operand op,int reg,FILE* file){
 					tmp_offset=tmp_stack->offset;
 					break;
 				}
-				tmp_stack=tmp_stack->offset;
+				tmp_stack=tmp_stack->next;
 			}
 			if(op->u.address_ornot)
 				fprintf(file,"  sw %s, %d($fp)\n",_reg[reg].regName,-tmp_offset);
@@ -159,7 +159,7 @@ void regSave(Operand op,int reg,FILE* file){
 					tmp_offset=tmp_stack->offset;
 					break;
 				}
-				tmp_stack=tmp_stack->offset;
+				tmp_stack=tmp_stack->next;
 			}
 			if(!op->u.address_ornot){
 				fprintf(file,"  lw %s, %d($fp)\n",_reg[14].regName,-tmp_offset);
@@ -261,7 +261,7 @@ void OBJ_generate(FILE* file){
 				regLoad(p1->code.u.assign.left, 8, file);
 				regLoad(p1->code.u.assign.right, 9, file);
 				fprintf(file,"  move %s, %s\n",_reg[8].regName,_reg[9].regName);
-				save_reg(p1->code.u.assign.left, 8, file);
+				regSave(p1->code.u.assign.left, 8, file);
 				break;
 			}
 			case (ADD_I):{
@@ -269,7 +269,7 @@ void OBJ_generate(FILE* file){
 				regLoad(p1->code.u.binop.op1, 9, file);
 				regLoad(p1->code.u.binop.op2, 10, file);
 				fprintf(file,"  add %s, %s, %s\n",_reg[8].regName,_reg[9].regName,_reg[10].regName);
-				save_reg(p1->code.u.binop.result,8,file);
+				regSave(p1->code.u.binop.result,8,file);
 				break;
 			}
 			case (SUB_I):{
@@ -277,7 +277,7 @@ void OBJ_generate(FILE* file){
 				regLoad(p1->code.u.binop.op1, 9, file);
 				regLoad(p1->code.u.binop.op2, 10, file);
 				fprintf(file,"  sub %s, %s, %s\n",_reg[8].regName,_reg[9].regName,_reg[10].regName);
-				save_reg(p1->code.u.binop.result,8,file);
+				regSave(p1->code.u.binop.result,8,file);
 				break;
 			}
 			case (MUL_I):{
@@ -285,7 +285,7 @@ void OBJ_generate(FILE* file){
 				regLoad(p1->code.u.binop.op1, 9, file);
 				regLoad(p1->code.u.binop.op2, 10, file);
 				fprintf(file,"  mul %s, %s, %s\n",_reg[8].regName,_reg[9].regName,_reg[10].regName);
-				save_reg(p1->code.u.binop.result,8,file);
+				regSave(p1->code.u.binop.result,8,file);
 				break;
 			}
 			case (DIV_I):{
@@ -294,7 +294,7 @@ void OBJ_generate(FILE* file){
 				regLoad(p1->code.u.binop.op2, 10, file);
 				fprintf(file,"  div %s, %s\n",_reg[9].regName,_reg[10].regName);
 				fprintf(file,"  mflo %s\n",_reg[8].regName);
-				save_reg(p1->code.u.binop.result,8,file);
+				regSave(p1->code.u.binop.result,8,file);
 				break;
 			}
 			case (FUNCTION_I):{
@@ -312,7 +312,7 @@ void OBJ_generate(FILE* file){
 				else{
 					fprintf(file,"  jal _func_%s\n",p1->code.u.call.result->u.function_name);
 				}	
-				save_reg(p1->code.u.call.op, 2,file);
+				regSave(p1->code.u.call.op, 2,file);
 				break;
 			}
 			case (DEC_I):{
@@ -327,8 +327,8 @@ void OBJ_generate(FILE* file){
 				break;
 			}
 			case (IFGOTO_I):{
-				load_reg(p1->code.u.ifgoto.result, 8, file);
-				load_reg(p1->code.u.ifgoto.op1, 9, file);
+				regLoad(p1->code.u.ifgoto.result, 8, file);
+				regLoad(p1->code.u.ifgoto.op1, 9, file);
 				fprintf(file, "  ");
 				if(strcmp(p1->code.u.ifgoto.mrk,"==")==0){
 					fprintf(file,"beq ");
