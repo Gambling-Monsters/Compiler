@@ -76,9 +76,6 @@ struct codestack_struct{
     code_stack next;
 };
 
-void init_reg();
-void init_data();
-void init_stack();
 void func_trans_main(InterCode_L cur);
 void trans_sigle(InterCode_L cur);
 int findOP(Operand cur);

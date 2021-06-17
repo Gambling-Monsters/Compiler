@@ -18,18 +18,6 @@ void OBJ_generate(FILE *out)
 
 	file = out;
 
-	init_reg();
-	init_data(file);
-	init_stack();
-	for (InterCode_L cur = head_code->next; cur != head_code; cur = cur->next)
-		trans_sigle(cur);
-
-	return;
-}
-
-void init_reg()
-{
-
 	for (int i = 0; i < 32; i++)
 		_reg[i].regState = r_free;
 
@@ -66,12 +54,6 @@ void init_reg()
 	_reg[30].regName = "$fp";
 	_reg[31].regName = "$ra";
 
-	return;
-}
-
-void init_data()
-{
-
 	fprintf(file, ".data\n");
 	fprintf(file, "_prompt: .asciiz \"Enter an integer:\"\n_ret: .asciiz \"\\n\"\n");
 	fprintf(file, ".globl main\n");
@@ -95,17 +77,14 @@ void init_data()
 	fprintf(file, "  move $v0, $0\n");
 	fprintf(file, "  jr $ra\n");
 
-	return;
-}
-
-void init_stack()
-{
-
 	stackHead = (code_stack)(malloc(sizeof(struct codestack_struct)));
 	stackHead->next = NULL;
 	stackFp = stackHead;
 	stackSp = stackHead;
 	stackHead->labelNum = -1;
+
+	for (InterCode_L cur = head_code->next; cur != head_code; cur = cur->next)
+		trans_sigle(cur);
 
 	return;
 }
@@ -295,8 +274,74 @@ int push_code(InterCode_L iter, int offset)
 			break;
 		}
 		case ADD_I:
+		{
+			//上面的理，我觉得op1和op2也不会产生重新分配的空间
+			//所以我做了相同的assertion，如果出错请直接删掉
+			Operand var1 = iter->code.u.binop.op1;
+			Operand var2 = iter->code.u.binop.op2;
+			Operand var3 = iter->code.u.binop.result;
+			if (var1->kind == VARIABLE_O || var1->kind == TEMPVAR_O)
+			{
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
+				offset = push_var(var1, offset);
+			}
+			if (var2->kind == VARIABLE_O || var2->kind == TEMPVAR_O)
+			{
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
+				offset = push_var(var2, offset);
+			}
+			if (var3->kind == VARIABLE_O || var3->kind == TEMPVAR_O)
+				offset = push_var(var3, offset);
+			break;
+		}
 		case SUB_I:
+		{
+			//上面的理，我觉得op1和op2也不会产生重新分配的空间
+			//所以我做了相同的assertion，如果出错请直接删掉
+			Operand var1 = iter->code.u.binop.op1;
+			Operand var2 = iter->code.u.binop.op2;
+			Operand var3 = iter->code.u.binop.result;
+			if (var1->kind == VARIABLE_O || var1->kind == TEMPVAR_O)
+			{
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
+				offset = push_var(var1, offset);
+			}
+			if (var2->kind == VARIABLE_O || var2->kind == TEMPVAR_O)
+			{
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
+				offset = push_var(var2, offset);
+			}
+			if (var3->kind == VARIABLE_O || var3->kind == TEMPVAR_O)
+				offset = push_var(var3, offset);
+			break;
+		}
 		case MUL_I:
+		{
+			//上面的理，我觉得op1和op2也不会产生重新分配的空间
+			//所以我做了相同的assertion，如果出错请直接删掉
+			Operand var1 = iter->code.u.binop.op1;
+			Operand var2 = iter->code.u.binop.op2;
+			Operand var3 = iter->code.u.binop.result;
+			if (var1->kind == VARIABLE_O || var1->kind == TEMPVAR_O)
+			{
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
+				offset = push_var(var1, offset);
+			}
+			if (var2->kind == VARIABLE_O || var2->kind == TEMPVAR_O)
+			{
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
+				offset = push_var(var2, offset);
+			}
+			if (var3->kind == VARIABLE_O || var3->kind == TEMPVAR_O)
+				offset = push_var(var3, offset);
+			break;
+		}
 		case DIV_I:
 		{
 			//上面的理，我觉得op1和op2也不会产生重新分配的空间
