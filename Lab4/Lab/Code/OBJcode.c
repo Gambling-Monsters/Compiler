@@ -21,7 +21,6 @@ void OBJ_generate(FILE *out)
 	init_reg();
 	init_data(file);
 	init_stack();
-	//printf("here1\n");
 	for (InterCode_L cur = head_code->next; cur != head_code; cur = cur->next)
 		trans_sigle(cur);
 
@@ -128,7 +127,6 @@ int reg_offset(Operand op)
 	{
 		if (iter->kind == op->kind && iter->labelNum == op->u.var_no)
 		{
-			//printf("here1\n");
 			ret_offset = iter->offset;
 			break;
 		}
@@ -138,7 +136,6 @@ int reg_offset(Operand op)
 
 void regLoad(Operand op, int reg)
 {
-	//printf("here1\n");
 	switch (op->kind)
 	{
 	case (VARIABLE_O):
@@ -157,7 +154,6 @@ void regLoad(Operand op, int reg)
 	}
 	case (FUNCTION_O):
 	{
-		//printf("here1\n");
 		fprintf(file, "  la %s, %s\n", _reg[reg].regName, op->u.function_name);
 		break;
 	}
@@ -169,10 +165,8 @@ void regLoad(Operand op, int reg)
 	case (TEMPVAR_O):
 	{
 		int tmp_offset = reg_offset(op);
-		//printf("here1\n");
 		if (!op->u.address_ornot)
 		{
-			//printf("here1\n");
 			fprintf(file, "  lw %s, %d($fp)\n", _reg[14].regName, -tmp_offset);
 			fprintf(file, "  lw %s, 0(%s)\n", _reg[reg].regName, _reg[14].regName);
 		}
@@ -199,7 +193,6 @@ void regSave(Operand op, int reg)
 		int tmp_offset = reg_offset(op);
 		if (!op->u.address_ornot)
 		{
-			//printf("%d\n",tmp_offset);
 			fprintf(file, "  lw %s, %d($fp)\n", _reg[14].regName, -tmp_offset);
 			fprintf(file, "  sw %s, 0(%s)\n", _reg[reg].regName, _reg[14].regName);
 		}
@@ -274,7 +267,7 @@ int push_code(InterCode_L iter, int offset)
 			break;
 
 		case CALL_I:
-			offset = push_var(iter->code.u.call.result, offset);
+			offset = push_var(iter->code.u.call.op, offset);
 			break;
 
 		case DEC_I:
@@ -288,11 +281,15 @@ int push_code(InterCode_L iter, int offset)
 			Operand var1 = iter->code.u.assign.left;
 			Operand var2 = iter->code.u.assign.right;
 			if (var1->kind == VARIABLE_O || var1->kind == TEMPVAR_O)
+			{	
+				//printf("here %d, name: %s, kind: %d, No %d\n", offset, var1->u.varible_name, var1->kind, var1->u.var_no);
 				offset = push_var(var1, offset);
+			}
 			if (var2->kind == VARIABLE_O || var2->kind == TEMPVAR_O)
 			{
-				//printf("Assertion in func_trans_main() fail.\n");
-				//assert(0);
+				//printf("here %d, name: %s, kind: %d, No %d\n", offset, var2->u.varible_name, var2->kind, var2->u.var_no);
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
 				offset = push_var(var2, offset);
 			}
 			break;
@@ -309,17 +306,17 @@ int push_code(InterCode_L iter, int offset)
 			Operand var3 = iter->code.u.binop.result;
 			if (var1->kind == VARIABLE_O || var1->kind == TEMPVAR_O)
 			{
-				//printf("Assertion in func_trans_main() fail.\n");
-				//assert(0);
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
 				offset = push_var(var1, offset);
 			}
 			if (var2->kind == VARIABLE_O || var2->kind == TEMPVAR_O)
 			{
-				//printf("Assertion in func_trans_main() fail.\n");
-				//assert(0);
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
 				offset = push_var(var2, offset);
 			}
-			//if (var3->kind == VARIABLE_O || var3->kind == TEMPVAR_O)
+			if (var3->kind == VARIABLE_O || var3->kind == TEMPVAR_O)
 				offset = push_var(var3, offset);
 			break;
 		}
@@ -337,16 +334,14 @@ void func_trans_main(InterCode_L cur)
 
 	for (InterCode_L iter = cur; iter != head_code; iter = iter->next)
 		offset = push_code(iter, offset);
-	//printf("%d\n",offset);
 	init_paras_tail(offset);
-
 	return;
 }
 
 void func_trans_others(InterCode_L cur)
 {
 	char *fuction_name = cur->code.u.function.result->u.function_name;
-	fprintf(file, "\n_func_%s:\n", fuction_name);
+	fprintf(file, "\n%s:\n", fuction_name);
 	//通过查找函数节点对应的变量树，先用名字找函数在符号表中找函数节点
 	ST_node func_node = find_symbol(fuction_name, __INT_MAX__);
 	int paras_num = func_node->type->u.function.para_num;
@@ -357,16 +352,14 @@ void func_trans_others(InterCode_L cur)
 	{
 		offset -= 4;
 		pushOP(iter->code.u.param.result, offset);
-		//printf("%d\n",offset);
 	}
 
 	offset += (4 * paras_num) - 4;
-	//assert(offset == 0);
+	assert(offset==0);
 	offset += 8;
 
 	for (; iter != head_code && iter->code.kind != FUNCTION_I; iter = iter->next)
 		offset = push_code(iter, offset);
-	//printf("%d\n",offset);
 	init_paras_tail(offset);
 	return;
 }
@@ -442,7 +435,11 @@ void trans_sigle(InterCode_L cur)
 	}
 	case (CALL_I):
 	{
-		fprintf(file, "  jal %s\n", cur->code.u.call.result->u.function_name);
+		if(strcmp(cur->code.u.call.result->u.function_name,"main")!=0)
+				fprintf(file,"  jal %s\n",cur->code.u.call.result->u.function_name);
+		else{
+			fprintf(file,"  jal %s\n",cur->code.u.call.result->u.function_name);
+		}
 		regSave(cur->code.u.call.op, 2);
 		break;
 	}
