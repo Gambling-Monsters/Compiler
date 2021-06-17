@@ -267,7 +267,7 @@ int push_code(InterCode_L iter, int offset)
 			break;
 
 		case CALL_I:
-			offset = push_var(iter->code.u.call.result, offset);
+			offset = push_var(iter->code.u.call.op, offset);
 			break;
 
 		case DEC_I:
@@ -281,9 +281,13 @@ int push_code(InterCode_L iter, int offset)
 			Operand var1 = iter->code.u.assign.left;
 			Operand var2 = iter->code.u.assign.right;
 			if (var1->kind == VARIABLE_O || var1->kind == TEMPVAR_O)
+			{	
+				//printf("here %d, name: %s, kind: %d, No %d\n", offset, var1->u.varible_name, var1->kind, var1->u.var_no);
 				offset = push_var(var1, offset);
+			}
 			if (var2->kind == VARIABLE_O || var2->kind == TEMPVAR_O)
 			{
+				//printf("here %d, name: %s, kind: %d, No %d\n", offset, var2->u.varible_name, var2->kind, var2->u.var_no);
 				offset = push_var(var2, offset);
 			}
 			break;
@@ -306,6 +310,7 @@ int push_code(InterCode_L iter, int offset)
 			{
 				offset = push_var(var2, offset);
 			}
+			if (var3->kind == VARIABLE_O || var3->kind == TEMPVAR_O)
 				offset = push_var(var3, offset);
 			break;
 		}
@@ -345,6 +350,7 @@ void func_trans_others(InterCode_L cur)
 	}
 
 	offset += (4 * paras_num) - 4;
+	assert(offset==0);
 	offset += 8;
 
 	for (; iter != head_code && iter->code.kind != FUNCTION_I; iter = iter->next)

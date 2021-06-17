@@ -1,58 +1,26 @@
-FUNCTION main : 
-DEC variable_0 20
-variable_2 := #0
+FUNCTION fact : 
+PARAM variable_0
+IF variable_0 != #1 GOTO label0
+RETURN variable_0
+GOTO label1
 LABEL label0 : 
-IF variable_2 >= #5 GOTO label1
-tempvar_0 := variable_2 * #4
-tempvar_1 := &variable_0 + tempvar_0
-READ tempvar_2
-*tempvar_1 := tempvar_2
-tempvar_3 := variable_2 + #1
-variable_2 := tempvar_3
-GOTO label0
+tempvar_2 := variable_0 - #1
+ARG tempvar_2 
+tempvar_1 := CALL fact
+tempvar_0 := variable_0 * tempvar_1
+RETURN tempvar_0
 LABEL label1 : 
-variable_2 := #1
+FUNCTION main : 
+READ tempvar_3
+variable_1 := tempvar_3
+IF variable_1 <= #1 GOTO label2
+ARG variable_1 
+tempvar_4 := CALL fact
+variable_2 := tempvar_4
+GOTO label3
 LABEL label2 : 
-IF variable_2 >= #5 GOTO label3
-variable_3 := variable_2
-LABEL label4 : 
-IF variable_3 <= #0 GOTO label5
-tempvar_4 := variable_3 - #1
-tempvar_5 := tempvar_4 * #4
-tempvar_6 := &variable_0 + tempvar_5
-tempvar_7 := variable_3 * #4
-tempvar_8 := &variable_0 + tempvar_7
-IF *tempvar_6 <= *tempvar_8 GOTO label5
-tempvar_9 := variable_3 * #4
-tempvar_10 := &variable_0 + tempvar_9
-variable_1 := *tempvar_10
-tempvar_11 := variable_3 * #4
-tempvar_12 := &variable_0 + tempvar_11
-tempvar_13 := variable_3 - #1
-tempvar_14 := tempvar_13 * #4
-tempvar_15 := &variable_0 + tempvar_14
-*tempvar_12 := *tempvar_15
-tempvar_16 := variable_3 - #1
-tempvar_17 := tempvar_16 * #4
-tempvar_18 := &variable_0 + tempvar_17
-*tempvar_18 := variable_1
-tempvar_19 := variable_3 - #1
-variable_3 := tempvar_19
-GOTO label4
-LABEL label5 : 
-tempvar_20 := variable_2 + #1
-variable_2 := tempvar_20
-GOTO label2
+variable_2 := #1
 LABEL label3 : 
-variable_2 := #0
-LABEL label6 : 
-IF variable_2 >= #5 GOTO label7
-tempvar_21 := variable_2 * #4
-tempvar_22 := &variable_0 + tempvar_21
-WRITE *tempvar_22
-tempvar_23 := #0
-tempvar_24 := variable_2 + #1
-variable_2 := tempvar_24
-GOTO label6
-LABEL label7 : 
+WRITE variable_2
+tempvar_5 := #0
 RETURN #0

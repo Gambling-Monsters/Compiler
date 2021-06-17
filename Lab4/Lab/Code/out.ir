@@ -1,58 +1,103 @@
-FUNCTION main : 
-DEC variable_0 20
-variable_2 := #0
-LABEL label0 : 
-IF variable_2 >= #5 GOTO label1
-tempvar_0 := variable_2 * #4
-tempvar_1 := &variable_0 + tempvar_0
-READ tempvar_2
-*tempvar_1 := tempvar_2
-tempvar_3 := variable_2 + #1
-variable_2 := tempvar_3
-GOTO label0
-LABEL label1 : 
-variable_2 := #1
-LABEL label2 : 
-IF variable_2 >= #5 GOTO label3
-variable_3 := variable_2
-LABEL label4 : 
-IF variable_3 <= #0 GOTO label5
-tempvar_4 := variable_3 - #1
-tempvar_5 := tempvar_4 * #4
-tempvar_6 := &variable_0 + tempvar_5
-tempvar_7 := variable_3 * #4
-tempvar_8 := &variable_0 + tempvar_7
-IF *tempvar_6 <= *tempvar_8 GOTO label5
-tempvar_9 := variable_3 * #4
-tempvar_10 := &variable_0 + tempvar_9
-variable_1 := *tempvar_10
-tempvar_11 := variable_3 * #4
-tempvar_12 := &variable_0 + tempvar_11
-tempvar_13 := variable_3 - #1
-tempvar_14 := tempvar_13 * #4
-tempvar_15 := &variable_0 + tempvar_14
-*tempvar_12 := *tempvar_15
-tempvar_16 := variable_3 - #1
-tempvar_17 := tempvar_16 * #4
-tempvar_18 := &variable_0 + tempvar_17
-*tempvar_18 := variable_1
-tempvar_19 := variable_3 - #1
-variable_3 := tempvar_19
-GOTO label4
-LABEL label5 : 
-tempvar_20 := variable_2 + #1
-variable_2 := tempvar_20
-GOTO label2
-LABEL label3 : 
-variable_2 := #0
-LABEL label6 : 
-IF variable_2 >= #5 GOTO label7
-tempvar_21 := variable_2 * #4
-tempvar_22 := &variable_0 + tempvar_21
-WRITE *tempvar_22
-tempvar_23 := #0
-tempvar_24 := variable_2 + #1
-variable_2 := tempvar_24
-GOTO label6
-LABEL label7 : 
-RETURN #0
+.data
+_prompt: .asciiz "Enter an integer:"
+_ret: .asciiz "\n"
+.globl main
+.text
+read:
+  li $v0, 4
+  la $a0, _prompt
+  syscall
+  li $v0, 5
+  syscall
+  jr $ra
+
+write:
+  li $v0, 1
+  syscall
+  li $v0, 4
+  la $a0, _ret
+  syscall
+  move $v0, $0
+  jr $ra
+
+_func_fact:
+  addi $sp, $sp, -20
+  sw $ra, 16($sp)
+  sw $fp, 12($sp)
+  addi $fp, $sp, 20
+  lw $t0, 0($fp)
+  li $t1, 1
+  bne $t0, $t1, label0
+  lw $t0, 0($fp)
+  move $v0, $t0
+  move $sp, $fp
+  lw $ra, -4($fp)
+  lw $fp, -8($fp)
+  jr $ra
+  j label1
+label0:
+  lw $t1, 0($fp)
+  li $t2, 1
+  sub $t0, $t1, $t2
+  sw $t0, -12($fp)
+  addi $sp,$sp,-4
+  lw $s0, -12($fp)
+  sw $s0, 0($sp)
+  jal fact
+  sw $v0, -16($fp)
+  lw $t1, 0($fp)
+  lw $t2, -16($fp)
+  mul $t0, $t1, $t2
+  sw $t0, -20($fp)
+  lw $t0, -20($fp)
+  move $v0, $t0
+  move $sp, $fp
+  lw $ra, -4($fp)
+  lw $fp, -8($fp)
+  jr $ra
+label1:
+
+main:
+  addi $sp, $sp, -28
+  sw $ra, 24($sp)
+  sw $fp, 20($sp)
+  addi $fp, $sp, 28
+  jal read
+  move $t0, $v0
+  sw $t0, -12($fp)
+  lw $t0, -16($fp)
+  lw $t1, -12($fp)
+  move $t0, $t1
+  sw $t0, -16($fp)
+  lw $t0, -16($fp)
+  li $t1, 1
+  ble $t0, $t1, label2
+  addi $sp,$sp,-4
+  lw $s0, -16($fp)
+  sw $s0, 0($sp)
+  jal fact
+  sw $v0, -20($fp)
+  lw $t0, -24($fp)
+  lw $t1, -20($fp)
+  move $t0, $t1
+  sw $t0, -24($fp)
+  j label3
+label2:
+  lw $t0, -24($fp)
+  li $t1, 1
+  move $t0, $t1
+  sw $t0, -24($fp)
+label3:
+  lw $t0, -24($fp)
+  move $a0, $t0
+  jal write
+  lw $t0, -28($fp)
+  li $t1, 0
+  move $t0, $t1
+  sw $t0, -28($fp)
+  li $t0, 0
+  move $v0, $t0
+  move $sp, $fp
+  lw $ra, -4($fp)
+  lw $fp, -8($fp)
+  jr $ra
