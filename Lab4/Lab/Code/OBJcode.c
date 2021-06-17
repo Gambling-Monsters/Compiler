@@ -435,11 +435,7 @@ void trans_sigle(InterCode_L cur)
 	}
 	case (CALL_I):
 	{
-		if(strcmp(cur->code.u.call.result->u.function_name,"main")!=0)
-				fprintf(file,"  jal %s\n",cur->code.u.call.result->u.function_name);
-		else{
-			fprintf(file,"  jal %s\n",cur->code.u.call.result->u.function_name);
-		}
+		fprintf(file,"  jal %s\n",cur->code.u.call.result->u.function_name);
 		regSave(cur->code.u.call.op, 2);
 		break;
 	}
