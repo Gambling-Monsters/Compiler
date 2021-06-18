@@ -4,6 +4,25 @@
 const int debug_mode = 0;
 FILE *file = NULL;
 
+typedef struct InterCode_Link* InterCode_L;
+struct InterCode_Link{
+	struct InterCode code;
+	InterCode_L prev, next;
+};
+
+struct reg_struct{
+	enum{
+		r_free,
+		r_used
+	}regState;
+    char *regName;
+};
+
+struct codestack_struct{
+    int offset, kind, labelNum;
+    code_stack next;
+};
+
 extern InterCode_L head_code;
 extern int labelCount;
 extern int varCount;
@@ -465,8 +484,6 @@ void trans_sigle(InterCode_L cur)
 
 		break;
 	}
-	case (PARAM_I):
-		break;
 	case (RETURN_I):
 	{
 		regLoad(cur->code.u.return_u.result, 8);
@@ -484,8 +501,6 @@ void trans_sigle(InterCode_L cur)
 		regSave(cur->code.u.call.op, 2);
 		break;
 	}
-	case (DEC_I):
-		break;
 	case (LABEL_I):
 	{
 		fprintf(file, "label%d:\n", cur->code.u.label.result->u.var_no);
@@ -501,7 +516,6 @@ void trans_sigle(InterCode_L cur)
 		regLoad(cur->code.u.ifgoto.result, 8);
 		regLoad(cur->code.u.ifgoto.op1, 9);
 		fprintf(file, "  ");
-
 		if (strcmp(cur->code.u.ifgoto.mrk, "==") == 0)
 			fprintf(file, "beq ");
 		else if (strcmp(cur->code.u.ifgoto.mrk, "!=") == 0)
@@ -514,7 +528,6 @@ void trans_sigle(InterCode_L cur)
 			fprintf(file, "bge ");
 		else if (strcmp(cur->code.u.ifgoto.mrk, "<=") == 0)
 			fprintf(file, "ble ");
-
 		fprintf(file, "%s, %s, label%d\n", _reg[8].regName, _reg[9].regName, cur->code.u.ifgoto.op2->u.var_no);
 		break;
 	}
