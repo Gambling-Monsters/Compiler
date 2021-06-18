@@ -4,6 +4,8 @@
 const int debug_mode = 0;
 FILE *file = NULL;
 
+
+
 extern InterCode_L head_code;
 extern int labelCount;
 extern int varCount;
@@ -13,22 +15,11 @@ extern void printOP(Operand op, FILE *file);
 struct reg_struct _reg[32];
 code_stack stackSp, stackFp, stackHead;
 
+void trans_sigle(InterCode_L cur);
 void OBJ_generate(FILE *out)
 {
 
 	file = out;
-
-	init_reg();
-	init_data(file);
-	init_stack();
-	for (InterCode_L cur = head_code->next; cur != head_code; cur = cur->next)
-		trans_sigle(cur);
-
-	return;
-}
-
-void init_reg()
-{
 
 	for (int i = 0; i < 32; i++)
 		_reg[i].regState = r_free;
@@ -66,12 +57,6 @@ void init_reg()
 	_reg[30].regName = "$fp";
 	_reg[31].regName = "$ra";
 
-	return;
-}
-
-void init_data()
-{
-
 	fprintf(file, ".data\n");
 	fprintf(file, "_prompt: .asciiz \"Enter an integer:\"\n_ret: .asciiz \"\\n\"\n");
 	fprintf(file, ".globl main\n");
@@ -95,17 +80,14 @@ void init_data()
 	fprintf(file, "  move $v0, $0\n");
 	fprintf(file, "  jr $ra\n");
 
-	return;
-}
-
-void init_stack()
-{
-
 	stackHead = (code_stack)(malloc(sizeof(struct codestack_struct)));
 	stackHead->next = NULL;
 	stackFp = stackHead;
 	stackSp = stackHead;
 	stackHead->labelNum = -1;
+
+	for (InterCode_L cur = head_code->next; cur != head_code; cur = cur->next)
+		trans_sigle(cur);
 
 	return;
 }
@@ -288,13 +270,81 @@ int push_code(InterCode_L iter, int offset)
 			if (var2->kind == VARIABLE_O || var2->kind == TEMPVAR_O)
 			{
 				//printf("here %d, name: %s, kind: %d, No %d\n", offset, var2->u.varible_name, var2->kind, var2->u.var_no);
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
 				offset = push_var(var2, offset);
 			}
 			break;
 		}
 		case ADD_I:
+		{
+			//上面的理，我觉得op1和op2也不会产生重新分配的空间
+			//所以我做了相同的assertion，如果出错请直接删掉
+			Operand var1 = iter->code.u.binop.op1;
+			Operand var2 = iter->code.u.binop.op2;
+			Operand var3 = iter->code.u.binop.result;
+			if (var1->kind == VARIABLE_O || var1->kind == TEMPVAR_O)
+			{
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
+				offset = push_var(var1, offset);
+			}
+			if (var2->kind == VARIABLE_O || var2->kind == TEMPVAR_O)
+			{
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
+				offset = push_var(var2, offset);
+			}
+			if (var3->kind == VARIABLE_O || var3->kind == TEMPVAR_O)
+				offset = push_var(var3, offset);
+			break;
+		}
 		case SUB_I:
+		{
+			//上面的理，我觉得op1和op2也不会产生重新分配的空间
+			//所以我做了相同的assertion，如果出错请直接删掉
+			Operand var1 = iter->code.u.binop.op1;
+			Operand var2 = iter->code.u.binop.op2;
+			Operand var3 = iter->code.u.binop.result;
+			if (var1->kind == VARIABLE_O || var1->kind == TEMPVAR_O)
+			{
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
+				offset = push_var(var1, offset);
+			}
+			if (var2->kind == VARIABLE_O || var2->kind == TEMPVAR_O)
+			{
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
+				offset = push_var(var2, offset);
+			}
+			if (var3->kind == VARIABLE_O || var3->kind == TEMPVAR_O)
+				offset = push_var(var3, offset);
+			break;
+		}
 		case MUL_I:
+		{
+			//上面的理，我觉得op1和op2也不会产生重新分配的空间
+			//所以我做了相同的assertion，如果出错请直接删掉
+			Operand var1 = iter->code.u.binop.op1;
+			Operand var2 = iter->code.u.binop.op2;
+			Operand var3 = iter->code.u.binop.result;
+			if (var1->kind == VARIABLE_O || var1->kind == TEMPVAR_O)
+			{
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
+				offset = push_var(var1, offset);
+			}
+			if (var2->kind == VARIABLE_O || var2->kind == TEMPVAR_O)
+			{
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
+				offset = push_var(var2, offset);
+			}
+			if (var3->kind == VARIABLE_O || var3->kind == TEMPVAR_O)
+				offset = push_var(var3, offset);
+			break;
+		}
 		case DIV_I:
 		{
 			//上面的理，我觉得op1和op2也不会产生重新分配的空间
@@ -304,10 +354,14 @@ int push_code(InterCode_L iter, int offset)
 			Operand var3 = iter->code.u.binop.result;
 			if (var1->kind == VARIABLE_O || var1->kind == TEMPVAR_O)
 			{
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
 				offset = push_var(var1, offset);
 			}
 			if (var2->kind == VARIABLE_O || var2->kind == TEMPVAR_O)
 			{
+				// printf("Assertion in func_trans_main() fail.\n");
+				// assert(0);
 				offset = push_var(var2, offset);
 			}
 			if (var3->kind == VARIABLE_O || var3->kind == TEMPVAR_O)
@@ -329,14 +383,13 @@ void func_trans_main(InterCode_L cur)
 	for (InterCode_L iter = cur; iter != head_code; iter = iter->next)
 		offset = push_code(iter, offset);
 	init_paras_tail(offset);
-
 	return;
 }
 
 void func_trans_others(InterCode_L cur)
 {
 	char *fuction_name = cur->code.u.function.result->u.function_name;
-	fprintf(file, "\n_func_%s:\n", fuction_name);
+	fprintf(file, "\n%s:\n", fuction_name);
 	//通过查找函数节点对应的变量树，先用名字找函数在符号表中找函数节点
 	ST_node func_node = find_symbol(fuction_name, __INT_MAX__);
 	int paras_num = func_node->type->u.function.para_num;
@@ -415,8 +468,6 @@ void trans_sigle(InterCode_L cur)
 
 		break;
 	}
-	case (PARAM_I):
-		break;
 	case (RETURN_I):
 	{
 		regLoad(cur->code.u.return_u.result, 8);
@@ -430,12 +481,10 @@ void trans_sigle(InterCode_L cur)
 	}
 	case (CALL_I):
 	{
-		fprintf(file, "  jal %s\n", cur->code.u.call.result->u.function_name);
+		fprintf(file,"  jal %s\n",cur->code.u.call.result->u.function_name);
 		regSave(cur->code.u.call.op, 2);
 		break;
 	}
-	case (DEC_I):
-		break;
 	case (LABEL_I):
 	{
 		fprintf(file, "label%d:\n", cur->code.u.label.result->u.var_no);
@@ -451,7 +500,6 @@ void trans_sigle(InterCode_L cur)
 		regLoad(cur->code.u.ifgoto.result, 8);
 		regLoad(cur->code.u.ifgoto.op1, 9);
 		fprintf(file, "  ");
-
 		if (strcmp(cur->code.u.ifgoto.mrk, "==") == 0)
 			fprintf(file, "beq ");
 		else if (strcmp(cur->code.u.ifgoto.mrk, "!=") == 0)
@@ -464,7 +512,6 @@ void trans_sigle(InterCode_L cur)
 			fprintf(file, "bge ");
 		else if (strcmp(cur->code.u.ifgoto.mrk, "<=") == 0)
 			fprintf(file, "ble ");
-
 		fprintf(file, "%s, %s, label%d\n", _reg[8].regName, _reg[9].regName, cur->code.u.ifgoto.op2->u.var_no);
 		break;
 	}

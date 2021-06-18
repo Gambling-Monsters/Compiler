@@ -20,81 +20,67 @@ write:
   move $v0, $0
   jr $ra
 
-_func_fact:
-  addi $sp, $sp, -24
-  sw $ra, 20($sp)
-  sw $fp, 16($sp)
-  addi $fp, $sp, 24
-  lw $t0, 0($fp)
-  li $t1, 1
-  bne $t0, $t1, label0
-  lw $t0, 0($fp)
-  move $v0, $t0
-  move $sp, $fp
-  lw $ra, -4($fp)
-  lw $fp, -8($fp)
-  jr $ra
-  j label1
-label0:
-  lw $t1, 0($fp)
-  li $t2, 1
-  sub $t0, $t1, $t2
-  sw $t0, -12($fp)
-  addi $sp,$sp,-4
-  lw $s0, -12($fp)
-  sw $s0, 0($sp)
-  jal fact
-  sw $v0, -20($fp)
-  lw $t1, 0($fp)
-  lw $t2, -20($fp)
-  mul $t0, $t1, $t2
-  sw $t0, -24($fp)
-  lw $t0, -24($fp)
-  move $v0, $t0
-  move $sp, $fp
-  lw $ra, -4($fp)
-  lw $fp, -8($fp)
-  jr $ra
-label1:
-
 main:
-  addi $sp, $sp, -32
-  sw $ra, 28($sp)
-  sw $fp, 24($sp)
-  addi $fp, $sp, 32
-  jal read
-  move $t0, $v0
-  sw $t0, -12($fp)
-  lw $t0, -16($fp)
-  lw $t1, -12($fp)
-  move $t0, $t1
-  sw $t0, -16($fp)
-  lw $t0, -16($fp)
-  li $t1, 1
-  ble $t0, $t1, label2
-  addi $sp,$sp,-4
-  lw $s0, -16($fp)
-  sw $s0, 0($sp)
-  jal fact
-  sw $v0, -28($fp)
-  lw $t0, -24($fp)
-  lw $t1, -28($fp)
-  move $t0, $t1
-  sw $t0, -24($fp)
-  j label3
-label2:
-  lw $t0, -24($fp)
-  li $t1, 1
-  move $t0, $t1
-  sw $t0, -24($fp)
-label3:
-  lw $t0, -24($fp)
-  move $a0, $t0
-  jal write
-  lw $t0, -32($fp)
+  addi $sp, $sp, -44
+  sw $ra, 40($sp)
+  sw $fp, 36($sp)
+  addi $fp, $sp, 44
+  lw $t0, -12($fp)
   li $t1, 0
   move $t0, $t1
+  sw $t0, -12($fp)
+  lw $t0, -16($fp)
+  li $t1, 1
+  move $t0, $t1
+  sw $t0, -16($fp)
+  lw $t0, -20($fp)
+  li $t1, 0
+  move $t0, $t1
+  sw $t0, -20($fp)
+  jal read
+  move $t0, $v0
+  sw $t0, -24($fp)
+  lw $t0, -28($fp)
+  lw $t1, -24($fp)
+  move $t0, $t1
+  sw $t0, -28($fp)
+label0:
+  lw $t0, -20($fp)
+  lw $t1, -28($fp)
+  bge $t0, $t1, label1
+  lw $t1, -12($fp)
+  lw $t2, -16($fp)
+  add $t0, $t1, $t2
   sw $t0, -32($fp)
+  lw $t0, -36($fp)
+  lw $t1, -32($fp)
+  move $t0, $t1
+  sw $t0, -36($fp)
+  lw $t0, -16($fp)
+  move $a0, $t0
+  jal write
+  lw $t0, -40($fp)
+  li $t1, 0
+  move $t0, $t1
+  sw $t0, -40($fp)
+  lw $t0, -12($fp)
+  lw $t1, -16($fp)
+  move $t0, $t1
+  sw $t0, -12($fp)
+  lw $t0, -16($fp)
+  lw $t1, -36($fp)
+  move $t0, $t1
+  sw $t0, -16($fp)
+  lw $t1, -20($fp)
+  li $t2, 1
+  add $t0, $t1, $t2
+  sw $t0, -44($fp)
+  lw $t0, -20($fp)
+  lw $t1, -44($fp)
+  move $t0, $t1
+  sw $t0, -20($fp)
+  j label0
+label1:
   li $t0, 0
   move $v0, $t0
   move $sp, $fp

@@ -75,16 +75,3 @@ struct codestack_struct{
     int offset, kind, labelNum;
     code_stack next;
 };
-
-void init_reg();
-void init_data();
-void init_stack();
-void func_trans_main(InterCode_L cur);
-void trans_sigle(InterCode_L cur);
-int findOP(Operand cur);
-void pushOP(Operand op,int offset);
-void popOP();
-int push_var(Operand var, int offset);
-void regLoad(Operand op,int reg);
-void regSave(Operand op,int reg);
-void OBJ_generate(FILE* out);
