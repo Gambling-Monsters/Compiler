@@ -56,3 +56,22 @@ struct InterCode
         struct { Operand result; } write;
     } u;
 };
+
+typedef struct InterCode_Link* InterCode_L;
+struct InterCode_Link{
+	struct InterCode code;
+	InterCode_L prev, next;
+};
+
+struct reg_struct{
+	enum{
+		r_free,
+		r_used
+	}regState;
+    char *regName;
+};
+
+struct codestack_struct{
+    int offset, kind, labelNum;
+    code_stack next;
+};

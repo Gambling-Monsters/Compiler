@@ -4,24 +4,7 @@
 const int debug_mode = 0;
 FILE *file = NULL;
 
-typedef struct InterCode_Link* InterCode_L;
-struct InterCode_Link{
-	struct InterCode code;
-	InterCode_L prev, next;
-};
 
-struct reg_struct{
-	enum{
-		r_free,
-		r_used
-	}regState;
-    char *regName;
-};
-
-struct codestack_struct{
-    int offset, kind, labelNum;
-    code_stack next;
-};
 
 extern InterCode_L head_code;
 extern int labelCount;
@@ -32,6 +15,7 @@ extern void printOP(Operand op, FILE *file);
 struct reg_struct _reg[32];
 code_stack stackSp, stackFp, stackHead;
 
+void trans_sigle(InterCode_L cur);
 void OBJ_generate(FILE *out)
 {
 
